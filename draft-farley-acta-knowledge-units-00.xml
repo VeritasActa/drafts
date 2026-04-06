@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc [
+  <!ENTITY nbsp    "&#160;">
+  <!ENTITY zwsp   "&#8203;">
+  <!ENTITY nbhy   "&#8209;">
+  <!ENTITY wj     "&#8288;">
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     ipr="trust200902"
+     docName="draft-farley-acta-knowledge-units-00"
+     category="info"
+     submissionType="independent"
+     tocInclude="true"
+     sortRefs="true"
+     symRefs="true"
+     version="3">
+
+  <front>
+    <title abbrev="Knowledge Units">Knowledge Units for Multi-Model Deliberation</title>
+
+    <seriesInfo name="Internet-Draft" value="draft-farley-acta-knowledge-units-00"/>
+
+    <author fullname="Tom Farley" initials="T." surname="Farley">
+      <organization>Veritas Acta</organization>
+      <address>
+        <email>tjf@veritasacta.com</email>
+        <uri>https://veritasacta.com</uri>
+      </address>
+    </author>
+
+    <date year="2026" month="April" day="6"/>
+
+    <area>General</area>
+    <workgroup>Network Working Group</workgroup>
+
+    <keyword>knowledge-unit</keyword>
+    <keyword>multi-model</keyword>
+    <keyword>deliberation</keyword>
+    <keyword>consensus</keyword>
+    <keyword>signed-receipts</keyword>
+    <keyword>Ed25519</keyword>
+
+    <abstract>
+      <t>This document defines the Knowledge Unit (KU) format for
+      representing verified knowledge produced through structured
+      multi-model deliberation.  A Knowledge Unit captures the question
+      asked, the models that participated, the consensus achieved, the
+      points of agreement and disagreement, and the cryptographic
+      receipts that bind each deliberation round to an independently
+      verifiable chain.</t>
+
+      <t>The format addresses the epistemic integrity gap in
+      LLM-maintained knowledge bases: how to prove that knowledge was
+      derived through a rigorous process, that disagreement was preserved
+      rather than smoothed away, and that the record has not been
+      tampered with.</t>
+
+      <t>This specification complements draft-farley-acta-signed-receipts,
+      which defines the receipt format and verification protocol used to
+      sign individual deliberation rounds.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="introduction" numbered="true" toc="default">
+      <name>Introduction</name>
+
+      <t>Large language models (LLMs) are increasingly used to produce,
+      curate, and maintain knowledge bases.  The "LLM Wiki" pattern,
+      in which an LLM incrementally compiles and maintains a structured
+      collection of interlinked documents from raw sources, has gained
+      significant adoption.  Multiple independent implementations have
+      appeared across personal research, team knowledge management,
+      and agent memory systems.</t>
+
+      <t>While effective for content maintenance, single-model knowledge
+      bases lack three properties critical for shared knowledge:</t>
+
+      <ol>
+        <li>Multi-perspective verification: A single model's output
+        reflects its training data biases and architectural limitations.
+        Multiple models with different training corpora and architectures
+        provide independent perspectives that surface blind spots no
+        single model can detect.</li>
+
+        <li>Structured disagreement: When models disagree, the
+        disagreement itself is informative.  Current approaches either
+        smooth away disagreement through editorial synthesis or fail to
+        capture it structurally.  Readers see false certainty rather than
+        the actual state of knowledge.</li>
+
+        <li>Cryptographic provenance: Mutable logs and git histories can
+        be rewritten.  Content hashes prove freshness but not
+        authenticity.  Tamper-evident provenance requires cryptographic
+        signatures bound to each deliberation step, independently
+        verifiable by any party without trusting the knowledge base
+        operator.</li>
+      </ol>
+
+      <t>This document defines the Knowledge Unit (KU) format to address
+      these gaps.  A KU is the output of a structured multi-model
+      deliberation process in which:</t>
+
+      <ul>
+        <li>Multiple frontier models independently answer a question
+        (Round 1)</li>
+        <li>Models critique each other's responses in assigned adversarial
+        roles (Round 2)</li>
+        <li>A synthesis engine extracts agreement and disagreement
+        (Round 3)</li>
+        <li>Every round response is Ed25519-signed per
+        <xref target="I-D.farley-acta-signed-receipts"/></li>
+      </ul>
+
+      <t>The result is a self-contained knowledge artifact that records
+      WHAT is known, HOW it was determined, WHERE models agree and
+      disagree, and provides CRYPTOGRAPHIC PROOF of the entire
+      process.</t>
+
+      <t>A Knowledge Unit is not a replacement for single-model wikis.
+      It is the artifact produced when a question is important enough
+      to warrant multi-model deliberation with cryptographic proof.
+      Many wiki entries do not need this level of rigour.  KUs are
+      for the entries that do.</t>
+    </section>
+
+    <section anchor="conventions" numbered="true" toc="default">
+      <name>Conventions and Definitions</name>
+
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+      NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
+      when, and only when, they appear in all capitals, as shown
+      here.</t>
+
+      <dl>
+        <dt>KU:</dt>
+        <dd>Knowledge Unit.  The atomic unit of verified knowledge
+        produced through multi-model deliberation.</dd>
+
+        <dt>Deliberation:</dt>
+        <dd>A structured multi-round process in which multiple models
+        produce, critique, and synthesise responses to a question.</dd>
+
+        <dt>Receipt:</dt>
+        <dd>An Ed25519-signed artifact attesting to a specific
+        deliberation round, as defined in
+        <xref target="I-D.farley-acta-signed-receipts"/>.</dd>
+
+        <dt>Consensus Level:</dt>
+        <dd>A structural classification of agreement among participating
+        models, determined mechanically from the deliberation
+        output.</dd>
+
+        <dt>Roster:</dt>
+        <dd>The set of models participating in a deliberation, along
+        with their versions and identifiers.</dd>
+
+        <dt>Source:</dt>
+        <dd>An input document, article, dataset, or other artifact that
+        provides context for the deliberation.  Sources are immutable
+        once ingested.</dd>
+
+        <dt>Volatility:</dt>
+        <dd>The expected rate of change for the knowledge domain a KU
+        covers, which informs freshness intervals.</dd>
+      </dl>
+    </section>
+
+    <section anchor="schema" numbered="true" toc="default">
+      <name>Knowledge Unit Schema</name>
+
+      <t>A Knowledge Unit MUST be represented as a JSON object conforming
+      to the schema defined in this section.  Implementations MUST
+      support JSON serialisation.  Implementations MAY support additional
+      serialisation formats (e.g., CBOR, YAML frontmatter).  See
+      <xref target="alt-serialization"/> for alternative serialisation
+      guidance.</t>
+
+      <section anchor="core-fields" numbered="true" toc="default">
+        <name>Core Fields</name>
+
+        <dl>
+          <dt>id (string, REQUIRED):</dt>
+          <dd>Unique identifier for this Knowledge Unit.  The format
+          MUST be "ku-" followed by a 12-character alphanumeric string
+          (e.g., "ku-z36vuoreb2k3").  The identifier MUST be immutable
+          once assigned.  Implementations MUST NOT reuse
+          identifiers.</dd>
+
+          <dt>version (integer, REQUIRED):</dt>
+          <dd>Schema version number.  The current version is 1.
+          Implementations MUST reject KUs with unrecognised version
+          numbers.</dd>
+
+          <dt>canonical_question (string, REQUIRED):</dt>
+          <dd>The definitive question this KU answers.  See
+          <xref target="canonical-question"/> for canonicalization rules.
+          This field MUST NOT be empty.</dd>
+
+          <dt>domain (string, OPTIONAL):</dt>
+          <dd>Topic classification.  Recommended values include
+          "technology", "science", "health", "policy", "economics",
+          "agent_security", "agent_governance", "research",
+          "engineering".  Implementations SHOULD use values from this
+          list where applicable but MAY define additional domain
+          values.</dd>
+
+          <dt>tags (array of strings, OPTIONAL):</dt>
+          <dd>Additional classification labels for cross-domain
+          discovery.  Implementations SHOULD use lowercase,
+          hyphen-separated values (e.g., "machine-learning",
+          "climate-policy").</dd>
+        </dl>
+      </section>
+
+      <section anchor="consensus-fields" numbered="true" toc="default">
+        <name>Consensus Fields</name>
+
+        <dl>
+          <dt>consensus_level (string, REQUIRED):</dt>
+          <dd>The level of agreement among participating models.  MUST be
+          one of: "unanimous", "strong", "split", "divergent".  See
+          <xref target="consensus-levels"/> for definitions.</dd>
+
+          <dt>agreed (array, REQUIRED):</dt>
+          <dd><t>Points where all participating models converge.  Each
+          element MUST be either a string containing a claim text, or an
+          object with the fields: claim (string, REQUIRED), confidence
+          (string, OPTIONAL: "high"/"medium"/"low"), evidence (string,
+          OPTIONAL), source_refs (array of strings, OPTIONAL: references
+          to source identifiers from the sources array).</t>
+          <t>The array MUST NOT be empty for KUs with consensus_level
+          "unanimous" or "strong".</t></dd>
+
+          <dt>disputed (array, OPTIONAL):</dt>
+          <dd>Points where models diverge.  Each element MUST be an
+          object with: claim (string, REQUIRED), positions (object,
+          REQUIRED: map from model identifier to position), significance
+          (string, OPTIONAL: "core", "framing", or "edge_case").</dd>
+
+          <dt>uncertain (array, OPTIONAL):</dt>
+          <dd>Points that no model could resolve with confidence.  Each
+          element MUST be either a string or an object with: claim
+          (string, REQUIRED), reason (string, OPTIONAL: e.g.,
+          "insufficient evidence", "outside training data", "rapidly
+          evolving area").</dd>
+
+          <dt>synthesis (string, OPTIONAL):</dt>
+          <dd>A human-readable summary paragraph produced by the
+          synthesis engine (Round 3).  IMPORTANT: The synthesis field is
+          NOT part of the canonical knowledge record.  It is an editorial
+          convenience produced by a single model and may introduce
+          editorial bias.  Implementations MUST NOT treat the synthesis
+          as authoritative.  The authoritative content is the agreed,
+          disputed, and uncertain arrays.</dd>
+        </dl>
+      </section>
+
+      <section anchor="provenance-fields" numbered="true" toc="default">
+        <name>Provenance Fields</name>
+
+        <dl>
+          <dt>models_used (array of strings, REQUIRED):</dt>
+          <dd>Model identifiers used in this deliberation.  Each
+          identifier SHOULD follow a provider/model format (e.g.,
+          "anthropic/claude-opus-4", "openai/gpt-5").</dd>
+
+          <dt>roster_version (string, OPTIONAL):</dt>
+          <dd>ISO 8601 date of the model roster snapshot used for this
+          deliberation.</dd>
+
+          <dt>roster_hash (string, OPTIONAL):</dt>
+          <dd>SHA-256 hash of the sorted models_used array, encoded as
+          lowercase hexadecimal.</dd>
+
+          <dt>process_template (string, REQUIRED):</dt>
+          <dd>The deliberation process template used.  Default value:
+          "3-round".  Implementations MUST document any non-default
+          process templates.</dd>
+
+          <dt>total_tokens (integer, OPTIONAL):</dt>
+          <dd>Total tokens consumed across all rounds and models.</dd>
+
+          <dt>total_cost_cents (number, OPTIONAL):</dt>
+          <dd>Total API cost in US cents for the deliberation.</dd>
+        </dl>
+      </section>
+
+      <section anchor="source-provenance" numbered="true" toc="default">
+        <name>Source Provenance</name>
+
+        <dl>
+          <dt>sources (array, OPTIONAL):</dt>
+          <dd><t>Source documents that provided context for the
+          deliberation.  Each element MUST be an object with: uri
+          (string, REQUIRED), title (string, OPTIONAL), content_hash
+          (string, REQUIRED: SHA-256 with "sha256:" prefix), ingested_at
+          (string, REQUIRED: ISO 8601).</t>
+          <t>When a source's content changes (its hash no longer matches
+          the stored content_hash), any KU derived from that source
+          SHOULD be considered potentially stale, regardless of its
+          fresh_until value.</t></dd>
+
+          <dt>source_url (string, OPTIONAL):</dt>
+          <dd>URL of the primary source.  Retained for backwards
+          compatibility; new implementations SHOULD use the sources
+          array.</dd>
+
+          <dt>source_title (string, OPTIONAL):</dt>
+          <dd>Title of the primary source document.  Retained for
+          backwards compatibility.</dd>
+        </dl>
+      </section>
+
+      <section anchor="lifecycle-fields" numbered="true" toc="default">
+        <name>Lifecycle Fields</name>
+
+        <dl>
+          <dt>status (string, REQUIRED):</dt>
+          <dd>Current lifecycle state.  MUST be one of: "active",
+          "stale", "superseded".  See
+          <xref target="lifecycle"/>.</dd>
+
+          <dt>fresh_until (string, REQUIRED):</dt>
+          <dd>ISO 8601 datetime after which this KU SHOULD be considered
+          potentially stale.  Default intervals by volatility: "stable"
+          365 days, "evolving" 90 days (default), "volatile" 30
+          days.</dd>
+
+          <dt>volatility (string, OPTIONAL):</dt>
+          <dd>Expected rate of change for this knowledge domain.  MUST
+          be one of: "stable" (unlikely to change, e.g., established
+          science), "evolving" (changes over months, e.g., best
+          practices; default), "volatile" (changes over weeks, e.g.,
+          benchmark rankings).</dd>
+
+          <dt>supersedes (string or null, OPTIONAL):</dt>
+          <dd>The id of the KU this KU replaces.</dd>
+
+          <dt>parent_ku_id (string or null, OPTIONAL):</dt>
+          <dd>The id of a parent KU from which this KU's question was
+          derived.</dd>
+
+          <dt>published_at (string, OPTIONAL):</dt>
+          <dd>ISO 8601 datetime of publication.</dd>
+        </dl>
+      </section>
+
+      <section anchor="receipt-fields" numbered="true" toc="default">
+        <name>Receipt Fields</name>
+
+        <dl>
+          <dt>receipt_sig (string, REQUIRED):</dt>
+          <dd>The aggregate Ed25519 signature over the receipt chain
+          hash, encoded as lowercase hexadecimal.</dd>
+
+          <dt>receipt_kid (string, REQUIRED):</dt>
+          <dd>Key identifier for the signing key.</dd>
+
+          <dt>receipt_hash (string, REQUIRED):</dt>
+          <dd>SHA-256 hash of the chained per-round receipt hashes.
+          See <xref target="receipt-binding"/>.</dd>
+        </dl>
+      </section>
+
+      <section anchor="relations" numbered="true" toc="default">
+        <name>Inter-KU Relations</name>
+
+        <dl>
+          <dt>relations (array, OPTIONAL):</dt>
+          <dd><t>Typed relations to other Knowledge Units.  Each element
+          MUST be an object with: target_ku_id (string, REQUIRED),
+          relation (string, REQUIRED: one of "supports", "contradicts",
+          "refines", "extends", "depends_on"), claims (array of strings,
+          OPTIONAL: specific claims the relation applies to).</t>
+          <t>Relations are directional.  Implementations SHOULD maintain
+          bidirectional awareness by adding reciprocal relations when
+          discovered.</t></dd>
+        </dl>
+      </section>
+    </section>
+
+    <section anchor="deliberation" numbered="true" toc="default">
+      <name>Deliberation Process</name>
+
+      <t>The default deliberation process ("3-round") consists of three
+      rounds.  Implementations MAY define additional process templates;
+      the process_template field MUST indicate which was used.</t>
+
+      <section anchor="round1" numbered="true" toc="default">
+        <name>Round 1: Independent</name>
+
+        <t>Each participating model independently answers the canonical
+        question.  Models MUST NOT be shown each other's responses during
+        Round 1.  Implementations SHOULD present responses to subsequent
+        rounds using blind labels (e.g., "Response A", "Response B") to
+        prevent anchoring on perceived model authority.</t>
+
+        <t>Implementations SHOULD include at least one model from a
+        different training lineage than the majority (e.g., at least one
+        non-US model when the majority are US-trained).</t>
+
+        <t>Each Round 1 response MUST be signed per
+        <xref target="I-D.farley-acta-signed-receipts"/>.</t>
+
+        <t>The response record MUST include: ku_id, round (1), slot
+        (1-based), model identifier, role ("independent"), content,
+        content_hash (SHA-256), receipt_sig (Ed25519), and
+        receipt_kid.</t>
+      </section>
+
+      <section anchor="round2" numbered="true" toc="default">
+        <name>Round 2: Adversarial Critique</name>
+
+        <t>Models are presented with all Round 1 responses (using blind
+        labels) and assigned critique roles.  Recommended roles include:
+        verifier (checks factual claims), devil_advocate (argues against
+        the emerging consensus), synthesizer (identifies common ground),
+        clarity_editor (ensures responses are unambiguous).</t>
+
+        <t>Implementations SHOULD assign different roles to different
+        models.  At least one model MUST be assigned a role that
+        challenges the emerging consensus.  Each Round 2 response MUST
+        be signed.</t>
+      </section>
+
+      <section anchor="round3" numbered="true" toc="default">
+        <name>Round 3: Synthesis</name>
+
+        <t>A synthesis engine processes all Round 1 and Round 2 responses
+        to produce: agreed (array), disputed (array), uncertain (array),
+        consensus_level (string), and follow_ups (array, OPTIONAL).</t>
+
+        <t>The synthesis output MUST be signed.  The synthesis engine
+        MUST NOT invent claims that do not appear in Round 1 or Round 2
+        responses.  Its role is extraction and classification, not
+        generation.</t>
+      </section>
+    </section>
+
+    <section anchor="consensus-levels" numbered="true" toc="default">
+      <name>Consensus Levels</name>
+
+      <t>Consensus levels are determined structurally by the synthesis
+      engine based on agreement patterns.  Consensus levels MUST NOT be
+      assigned editorially.</t>
+
+      <dl>
+        <dt>unanimous:</dt>
+        <dd>All models converge on the same core claims.  The disputed
+        array MUST be empty.</dd>
+
+        <dt>strong:</dt>
+        <dd>Models agree on the core answer but differ on emphasis or
+        edge cases.  The disputed array MAY contain minor points.</dd>
+
+        <dt>split:</dt>
+        <dd>Models agree on some claims but diverge substantively on at
+        least one core claim.  The disputed array MUST contain at least
+        one entry with significance "core".</dd>
+
+        <dt>divergent:</dt>
+        <dd>No meaningful common ground.  Models reach fundamentally
+        different conclusions.</dd>
+      </dl>
+
+      <t>IMPORTANT: Consensus among AI models is evidence, not proof.
+      Strong consensus means multiple models with different training
+      data, architectures, and potential biases independently arrived at
+      similar conclusions.  It does not establish truth.</t>
+    </section>
+
+    <section anchor="canonical-question" numbered="true" toc="default">
+      <name>Canonical Question Resolution</name>
+
+      <t>Different phrasings of the same question SHOULD resolve to the
+      same canonical_question.  Canonicalization serves three purposes:
+      deduplication, linking (hierarchical knowledge structures), and
+      discovery.</t>
+
+      <t>The canonicalization model is hierarchical inheritance: a
+      general question serves as the canonical anchor, and specific
+      variants (audience, constraint, temporal) inherit from it and add
+      specialized components.  Each variant MAY produce its own KU with
+      a parent_ku_id reference.</t>
+
+      <t>Implementations MUST normalise questions by: converting to
+      lowercase, removing leading/trailing whitespace, removing trailing
+      punctuation, reducing consecutive whitespace, and removing filler
+      phrases.  Implementations SHOULD additionally apply domain-specific
+      synonym resolution and normalise named entities to canonical
+      forms.</t>
+
+      <t>Before initiating a new deliberation, implementations SHOULD
+      check whether a KU already exists for the normalised canonical
+      question.  If an active KU exists, the implementation SHOULD
+      return it rather than re-deliberating, unless the KU is stale or
+      fresh deliberation is explicitly requested.</t>
+    </section>
+
+    <section anchor="lifecycle" numbered="true" toc="default">
+      <name>Lifecycle Management</name>
+
+      <section anchor="states" numbered="true" toc="default">
+        <name>States</name>
+
+        <dl>
+          <dt>active:</dt>
+          <dd>Produced within its freshness window, not superseded.</dd>
+
+          <dt>stale:</dt>
+          <dd>Current time exceeds fresh_until, or a source content_hash
+          no longer matches.  SHOULD be re-deliberated.</dd>
+
+          <dt>superseded:</dt>
+          <dd>A newer KU with supersedes pointing to this KU exists.
+          MUST NOT be modified.  Receipts remain verifiable.</dd>
+        </dl>
+      </section>
+
+      <section anchor="operations" numbered="true" toc="default">
+        <name>Operations</name>
+
+        <t>KEEP: Re-deliberation confirms same conclusions; fresh_until
+        extended.  UPDATE: Refines without contradiction; new KU with
+        supersedes link.  SUPERSEDE: Contradicts previous consensus;
+        same mechanics as UPDATE.  MERGE: Overlapping KUs combined into
+        one.  ARCHIVE: No longer relevant; superseded with no
+        replacement.</t>
+
+        <t>IMPORTANT: Published KUs are NEVER modified in place.  All
+        changes produce new KUs with supersedes links.</t>
+      </section>
+    </section>
+
+    <section anchor="receipt-binding" numbered="true" toc="default">
+      <name>Receipt Binding</name>
+
+      <t>For a standard 3-round deliberation with N models, the
+      receipt_hash is computed as:</t>
+
+      <artwork><![CDATA[
+round1_hash = SHA-256(r1_1.sig || r1_2.sig || ... || r1_N.sig)
+round2_hash = SHA-256(r2_1.sig || r2_2.sig || ... || r2_N.sig)
+round3_hash = SHA-256(r3_synth.sig)
+receipt_hash = SHA-256(round1_hash || round2_hash || round3_hash)
+      ]]></artwork>
+
+      <t>The receipt_sig is produced by signing receipt_hash with the
+      gateway's Ed25519 private key per <xref target="RFC8032"/>.
+      Verification uses Ed25519-Verify(public_key, receipt_hash,
+      receipt_sig).  The public key MUST be retrievable through the
+      receipt_kid field or direct inclusion.</t>
+    </section>
+
+    <section anchor="progressive-disclosure" numbered="true" toc="default">
+      <name>Progressive Disclosure</name>
+
+      <t>To support efficient consumption across different contexts,
+      implementations SHOULD support progressive disclosure at four
+      standard levels:</t>
+
+      <dl>
+        <dt>L0 - Headline (~50 tokens):</dt>
+        <dd>canonical_question + consensus_level + first agreed claim.
+        Suitable for search result listings.</dd>
+
+        <dt>L1 - Summary (~200 tokens):</dt>
+        <dd>All agreed claims + disputed claim texts (without per-model
+        positions).  Suitable for agent context injection.</dd>
+
+        <dt>L2 - Full (~1,000 tokens):</dt>
+        <dd>All L1 fields + synthesis + per-model positions + uncertain
+        array + source references.  Suitable for article display.</dd>
+
+        <dt>L3 - Complete (full deliberation):</dt>
+        <dd>All round response texts + individual receipt signatures.
+        Suitable for audit and verification.</dd>
+      </dl>
+
+      <t>An agent querying a KU corpus SHOULD read L0 for all
+      candidates, L1 for top matches, and L2 or L3 only for the selected
+      KU.</t>
+    </section>
+
+    <section anchor="alt-serialization" numbered="true" toc="default">
+      <name>Alternative Serialization</name>
+
+      <t>The canonical representation is JSON.  However, many knowledge
+      management tools operate on YAML frontmatter with markdown bodies.
+      Implementations MAY represent a KU as YAML frontmatter followed by
+      a markdown body.  The markdown body maps to the synthesis field
+      (editorial, not canonical).  When converting between formats, the
+      agreed and disputed arrays MUST preserve their full structure.</t>
+    </section>
+
+    <section anchor="security" numbered="true" toc="default">
+      <name>Security Considerations</name>
+
+      <t>Model Collusion: If all models share the same bias, consensus
+      may be spurious.  Implementations SHOULD include at least one model
+      from a different training lineage.</t>
+
+      <t>Synthesis Bias: The synthesis field is NOT canonical.  The
+      agreed, disputed, and uncertain arrays are authoritative.</t>
+
+      <t>Receipt Replay: Verifiers MUST check that receipt_hash covers
+      the claimed content by recomputing the chain construction.</t>
+
+      <t>Key Compromise: Implementations SHOULD support key rotation
+      and publish revocation lists.</t>
+
+      <t>Prompt Injection: Source material is context, not instruction.
+      The adversarial critique round surfaces injected
+      inconsistencies.</t>
+
+      <t>Freshness: Consumers SHOULD check lifecycle state before
+      relying on KU content.</t>
+
+      <t>Source Integrity: When sources are available, content_hash
+      enables verification that the source has not changed.
+      Implementations SHOULD flag KUs with source hash mismatches as
+      stale.</t>
+
+      <t>Confidence Decay: KUs about rapidly evolving domains (volatility
+      "volatile") should be consumed with appropriate scepticism even
+      within their freshness window.</t>
+    </section>
+
+    <section anchor="iana" numbered="true" toc="default">
+      <name>IANA Considerations</name>
+      <t>This document has no IANA actions.  A future revision may
+      request registration of a media type
+      "application/vnd.acta.knowledge-unit+json".</t>
+    </section>
+  </middle>
+
+  <back>
+    <references>
+      <name>References</name>
+
+      <references>
+        <name>Normative References</name>
+
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8032.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8785.xml"/>
+
+        <reference anchor="I-D.farley-acta-signed-receipts">
+          <front>
+            <title>Signed Receipts for AI Agent Actions</title>
+            <author fullname="Tom Farley" initials="T." surname="Farley">
+              <organization>Veritas Acta</organization>
+            </author>
+            <date year="2026"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-farley-acta-signed-receipts-01"/>
+        </reference>
+      </references>
+
+      <references>
+        <name>Informative References</name>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9497.xml"/>
+      </references>
+    </references>
+  </back>
+</rfc>
