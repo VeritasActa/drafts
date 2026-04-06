@@ -1,3 +1,7 @@
+[![IETF Draft: Signed Receipts](https://img.shields.io/badge/IETF-draft--farley--acta--signed--receipts--01-blue)](https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/)
+[![IETF Draft: Knowledge Units](https://img.shields.io/badge/IETF-draft--farley--acta--knowledge--units--00-blue)](https://datatracker.ietf.org/doc/draft-farley-acta-knowledge-units/)
+[![npm: @veritasacta/verify](https://img.shields.io/npm/v/@veritasacta/verify?label=verifier)](https://www.npmjs.com/package/@veritasacta/verify)
+
 # Veritas Acta IETF Internet-Drafts
 
 This repository contains the source for IETF Internet-Drafts published by the [Veritas Acta](https://veritasacta.com) protocol project.
@@ -50,6 +54,9 @@ Issues and pull requests are welcome. The drafts follow IETF conventions (RFC 21
 - [Receipt Verifier](https://www.npmjs.com/package/@veritasacta/verify) (Apache-2.0)
 - [protect-mcp](https://www.npmjs.com/package/protect-mcp) (MIT, reference implementation)
 - [Live Knowledge Base](https://acta.today/wiki)
+- [VeritasActa/Acta](https://github.com/VeritasActa/Acta) -- Protocol implementation and wiki
+- [ScopeBlind/scopeblind-gateway](https://github.com/ScopeBlind/scopeblind-gateway) -- MCP gateway with Cedar policy engine
+- [ScopeBlind/examples](https://github.com/ScopeBlind/examples) -- Integration examples and interop scenarios
 
 ## License
 
