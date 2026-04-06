@@ -21,7 +21,8 @@
 
     <seriesInfo name="Internet-Draft" value="draft-farley-acta-knowledge-units-00"/>
 
-    <author fullname="Tom Farley" initials="T." surname="Farley">
+    <author fullname="Tom Farley" initials="T." surname="Farley"
+            asciiFullname="Tom Farley" orcid="https://orcid.org/0009-0009-7373-5650">
       <organization>Veritas Acta</organization>
       <address>
         <email>tjf@veritasacta.com</email>

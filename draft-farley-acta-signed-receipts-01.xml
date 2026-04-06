@@ -12,7 +12,8 @@
   <front>
     <title abbrev="Acta Signed Receipts">Signed Decision Receipts for Machine-to-Machine Access Control</title>
     <seriesInfo name="Internet-Draft" value="draft-farley-acta-signed-receipts-01"/>
-    <author initials="T." surname="Farley" fullname="Tom Farley">
+    <author initials="T." surname="Farley" fullname="Tom Farley"
+            orcid="https://orcid.org/0009-0009-7373-5650">
       <organization>Veritas Acta</organization>
       <address>
         <email>tjf@veritasacta.com</email>
