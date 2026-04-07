@@ -53,6 +53,7 @@ Issues and pull requests are welcome. The drafts follow IETF conventions (RFC 21
 - [Veritas Acta Protocol](https://veritasacta.com)
 - [Receipt Verifier](https://www.npmjs.com/package/@veritasacta/verify) (Apache-2.0)
 - [protect-mcp](https://www.npmjs.com/package/protect-mcp) (MIT, reference implementation)
+- [protect-mcp-adk](https://pypi.org/project/protect-mcp-adk/) (MIT, Python, Google ADK plugin)
 - [Live Knowledge Base](https://acta.today/wiki)
 - [VeritasActa/Acta](https://github.com/VeritasActa/Acta) -- Protocol implementation and wiki
 - [ScopeBlind/scopeblind-gateway](https://github.com/ScopeBlind/scopeblind-gateway) -- MCP gateway with Cedar policy engine
