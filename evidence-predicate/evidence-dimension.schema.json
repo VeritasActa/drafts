@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://usetruth.ai/acta/evidence-dimension.schema.json",
+  "title": "ACTA optional evidence[] predicate (Issue #3)",
+  "description": "Optional per-dimension evidentiary basis for an ACTA Access Decision Receipt. Proposed location: payload.evidence.dimensions[] (composes with the existing payload.evidence object; it does NOT restate the assurance tier derived from who signed the receipt). Safely ignorable by verifiers that do not understand it. Each predicate records WHAT a decision rested on and WHOSE attestation it is; the attesting authority named in source MUST be independent of the runtime being gated, because self-attested evidence is not evidence.",
+  "type": "array",
+  "items": { "$ref": "#/$defs/evidencePredicate" },
+
+  "$defs": {
+    "evidencePredicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimension", "state", "source"],
+      "properties": {
+        "dimension": {
+          "description": "Closed core vocabulary for the evidentiary dimension, so verifiers can reason about it rather than treat it as free text. New core dimensions are added by spec revision. Experimental or vendor dimensions MUST use an 'x-<vendor>-<name>' form so unknown values stay safely ignorable.",
+          "oneOf": [
+            { "enum": ["data_rights", "provenance", "freshness", "contradiction"] },
+            { "type": "string", "pattern": "^x-[a-z0-9]+(-[a-z0-9]+)+$" }
+          ]
+        },
+        "state": {
+          "description": "Closed vocabulary for the outcome of the dimension check.",
+          "enum": ["satisfied", "unverified", "stale", "failed"]
+        },
+        "source": { "$ref": "#/$defs/evidenceSource" }
+      }
+    },
+
+    "evidenceSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Structured provenance of the attestation for this dimension. 'issuer' identifies the attesting authority, which MUST be independent of the runtime being gated. Exactly one of 'key' (an inline pinned public key) or 'ref' (a resolvable reference to the issuer's key material) MUST be present, so the relying party can pin WHOSE attestation this is instead of trusting a bare label.",
+      "required": ["issuer"],
+      "oneOf": [
+        { "required": ["key"] },
+        { "required": ["ref"] }
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identity of the attesting authority as a URI, DID, or ACTA issuer id (e.g. 'did:web:evidence.usetruth.ai' or 'ut:issuer:usetruth.ai'). MUST NOT be the runtime being gated."
+        },
+        "kid": {
+          "type": "string",
+          "description": "Optional key id selecting which key at 'ref' to pin (which entry in the JWKS / which DID verification method). Recommended whenever 'ref' is used so the relying party pins a specific key rather than any key the reference resolves to."
+        },
+        "key": {
+          "type": "object",
+          "description": "Inline pinned public key of the issuer as a JWK (RFC 7517). Use when the relying party pins the key directly in the receipt.",
+          "required": ["kty"],
+          "properties": {
+            "kty": { "type": "string" },
+            "crv": { "type": "string" },
+            "x":   { "type": "string" },
+            "kid": { "type": "string" },
+            "alg": { "type": "string" }
+          }
+        },
+        "ref": {
+          "type": "string",
+          "format": "uri",
+          "description": "Resolvable reference to the issuer's key material, e.g. a JWKS URL or a DID that resolves to keys. Use when the relying party resolves and caches the key out of band."
+        }
+      }
+    }
+  }
+}
