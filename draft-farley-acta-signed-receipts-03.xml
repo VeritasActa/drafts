@@ -18,7 +18,7 @@
         <email>tom@scopeblind.com</email>
       </address>
     </author>
-    <date year="2026" month="July" day="8"/>
+    <date year="2026" month="August" day="29"/>
     <area>Security</area>
     <workgroup>Independent</workgroup>
     <keyword>MCP</keyword>
@@ -33,7 +33,7 @@
 format for recording machine-to-machine access control decisions.
 Each receipt captures the identity of the decision maker, the tool
 or resource being accessed, the policy evaluation result, and a
-timestamp — all signed with Ed25519 <xref target="RFC8032"/> and serialized using
+timestamp. All of these are signed with Ed25519 <xref target="RFC8032"/> and serialized using
 deterministic JSON canonicalization <xref target="RFC8785"/>.</t>
       <t>The format is designed for environments where AI agents invoke tools
 on behalf of human operators, particularly the Model Context Protocol
@@ -47,8 +47,8 @@ and cross-organizational trust federation.</t>
 
 <section anchor="introduction">
       <name>Introduction</name>
-      <t>As AI agents increasingly act autonomously — invoking tools, accessing
-APIs, and modifying state — there is a growing need for cryptographic
+      <t>As AI agents increasingly act autonomously (invoking tools, accessing
+APIs, and modifying state), there is a growing need for cryptographic
 evidence of what decisions were made, by whom, and under what policy.</t>
       <t>Current approaches rely on centralized logging (e.g., CloudWatch, SIEM
 ingestion), which requires trust in the log operator and provides no
@@ -95,7 +95,7 @@ without encoding legal regime information in the receipt itself.</t>
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
 "OPTIONAL" in this document are to be interpreted as described in
-BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and only when, they appear in all
 capitals, as shown here.</t>
       </section>
     </section>
@@ -115,16 +115,28 @@ capitals, as shown here.</t>
   }
 }
 ]]></artwork>
+      <t>This is the envelope shape, and it is the shape new implementations
+<bcp14>SHOULD</bcp14> emit. A second, flat shape carries the payload fields
+at the top level alongside a <tt>signature</tt> member that is a hexadecimal
+string. It predates the envelope and remains in use. The two shapes are
+signed over different byte strings, and an implementation
+<bcp14>MUST</bcp14> determine which shape it is handling before computing or
+checking a signature; see <xref target="signature-scope"/>. Except where a
+shape is named explicitly, the remainder of this document describes the
+envelope shape.</t>
         <section anchor="signature-object">
           <name>Signature Object</name>
           <dl>
             <dt>alg (REQUIRED):</dt>
             <dd>
-              <t>The signature algorithm. The mandatory-to-implement algorithm
-is "EdDSA" for Ed25519 as defined in RFC 8032. Implementations
-MAY additionally support "ES256" (ECDSA with P-256 and SHA-256)
-to accommodate systems that use P-256 keys natively. Verifiers
-MUST support "EdDSA" and SHOULD support "ES256".</t>
+              <t>The signature algorithm. The mandatory-to-implement
+algorithm is "EdDSA" for Ed25519 as defined in <xref target="RFC8032"/>.
+Implementations <bcp14>MAY</bcp14> additionally support "ES256" (ECDSA
+with P-256 and SHA-256) to accommodate systems that use P-256 keys
+natively. Verifiers <bcp14>MUST</bcp14> support "EdDSA" and
+<bcp14>SHOULD</bcp14> support "ES256". This list is not closed; see
+<xref target="algorithm-agility"/> for registered values and
+for the algorithms recommended for new deployments.</t>
             </dd>
             <dt>kid (REQUIRED):</dt>
             <dd>
@@ -136,16 +148,24 @@ first 12 characters of the Base58-encoded Ed25519 public key.</t>
             </dd>
             <dt>sig (REQUIRED):</dt>
             <dd>
-              <t>The Ed25519 signature over the canonicalized payload, encoded
-as a lowercase hexadecimal string (128 characters for 64 bytes).</t>
+              <t>The signature over the signing input defined in
+<xref target="signature-scope"/>, encoded as a lowercase hexadecimal
+string. The encoded length is determined by the algorithm named in
+<tt>alg</tt> and is not fixed by this document: Ed25519 produces 64
+bytes and therefore 128 hexadecimal characters, while other registered
+algorithms produce other lengths. Verifiers <bcp14>MUST NOT</bcp14>
+reject a signature on encoded length alone.</t>
             </dd>
           </dl>
         </section>
       </section>
       <section anchor="payload">
         <name>Payload</name>
-        <t>The payload is a JSON object whose schema depends on the receipt type.
-All payload types share the following common fields:</t>
+        <t>The payload is a JSON object whose schema depends on the receipt
+type. This section lists the members common to all payload types. Members
+specific to one receipt type are defined with that type in
+<xref target="receipt-types"/>. A member defined elsewhere in this document
+that may appear in any payload type is listed here.</t>
         <dl>
           <dt>type (REQUIRED):</dt>
           <dd>
@@ -162,6 +182,36 @@ MUST include timezone designator (typically "Z" for UTC).</t>
           <dd>
             <t>The identifier of the entity that issued and signed the receipt.
 MUST match the <tt>kid</tt> field in the signature object.</t>
+          </dd>
+          <dt>previousReceiptHash (OPTIONAL):</dt>
+          <dd>
+            <t>A link to the immediately preceding receipt in a receipt chain,
+present at most once. When present it <bcp14>MUST</bcp14> be a member of
+the payload object, not of the enclosing receipt object, and its value
+<bcp14>MUST</bcp14> be computed as specified in
+<xref target="chain-hash-scope"/>.</t>
+            <t>The first receipt in a chain <bcp14>MUST</bcp14> omit the member
+entirely rather than carrying <tt>null</tt> or an empty string, which
+would produce different JCS output and therefore a different signature.
+A receipt that omits it is either a chain genesis or an unchained
+receipt; the format does not distinguish these, and a verifier
+<bcp14>MUST NOT</bcp14> infer chain membership from its absence.</t>
+          </dd>
+          <dt>evidence (OPTIONAL):</dt>
+          <dd>
+            <t>The evidentiary basis the decision rested on, as defined in
+<xref target="evidence-predicate"/>. When present it <bcp14>MUST</bcp14> be an
+array. A verifier that does not implement the predicate
+<bcp14>MUST</bcp14> still verify the receipt signature and chain, and
+<bcp14>MUST</bcp14> ignore this member otherwise.</t>
+          </dd>
+          <dt>committed_fields_root (OPTIONAL):</dt>
+          <dd>
+            <t>The Merkle root committing to selectively disclosable fields, as
+defined in <xref target="commitment-mode"/>. Present only in commitment mode.
+A verifier that does not implement commitment mode <bcp14>MUST</bcp14> ignore
+this member when verifying the signature, though the member remains covered by
+that signature.</t>
           </dd>
           <dt>payload_digest (OPTIONAL):</dt>
           <dd>
@@ -216,21 +266,6 @@ same hash regardless of implementation language.</t>
             <t>This field is RECOMMENDED when the receipt will be consumed by
 external governance frameworks or cross-engine audit tools.</t>
           </dd>
-          <dt>verifier_sigil (OPTIONAL):</dt>
-          <dd>
-            <t>The fingerprint of the Sigil commitment carried by the verifier
-that checked this receipt. The Sigil is a deterministic visual
-artifact derived from the verifier's project public key and a
-policy containing the verifier's source code hash. This field
-allows downstream consumers to confirm that a receipt was
-checked by a known, unmodified verifier.
-</t>
-            <t>Format: an 8-character hexadecimal string (the first 8
-characters of the Sigil's SHA-256 derivation hash).</t>
-            <t>This field is produced by the verifier at verification time,
-not by the receipt issuer at signing time. It is OPTIONAL and
-informational.</t>
-          </dd>
           <dt>iteration_id (OPTIONAL):</dt>
           <dd>
             <t>A logical iteration grouping identifier for multi-step agent
@@ -244,7 +279,7 @@ receipt count.
 convention using dot-separated segments (e.g., "run_7.sub_3"
 encodes a nested iteration at depth 2). The field is
 agent-declared metadata for grouping purposes, NOT a security
-boundary — a malicious agent could set misleading values.
+boundary: a malicious agent could set misleading values.
 Receipt signatures cover this field (tamper-evident) but do
 not vouch for its semantic accuracy.</t>
           </dd>
@@ -253,7 +288,7 @@ not vouch for its semantic accuracy.</t>
     </section>
     <section anchor="receipt-types">
       <name>Receipt Types</name>
-      <t>This specification defines four receipt types. Implementations MAY
+      <t>This specification defines six receipt types. Implementations MAY
 define additional types using the namespaced <tt>type</tt> field.</t>
       <section anchor="access-decision-receipt">
         <name>Access Decision Receipt</name>
@@ -504,9 +539,9 @@ revealing organizational identity, budget ceiling, or delegation chain.</t>
             <dd>
               <t>A coarse indicator of budget utilization. One of: <tt>"low"</tt>
 (&lt;25%), <tt>"medium"</tt> (25-75%), <tt>"high"</tt> (75-100%),
-<tt>"exceeded"</tt>. The exact budget ceiling is NOT disclosed —
-only the band — preventing price discrimination while
-proving budget compliance.</t>
+<tt>"exceeded"</tt>. The exact budget ceiling is NOT disclosed, only the
+band. This prevents price discrimination while proving budget
+compliance.</t>
             </dd>
             <dt>decision (REQUIRED):</dt>
             <dd>
@@ -515,7 +550,7 @@ proving budget compliance.</t>
           </dl>
           <t>The receipt deliberately EXCLUDES: organization name, total budget
 ceiling, exact remaining budget, agent identity, and delegation
-chain. Verification uses VOPRF (RFC 9497) to confirm receipt
+chain. Verification uses VOPRF (<xref target="RFC9497"/>) to confirm receipt
 validity without the verifier learning which organization issued it.</t>
         </section>
       </section>
@@ -550,6 +585,151 @@ fields.</t>
 ]]></artwork>
       </section>
     </section>
+    <section anchor="evidence-predicate">
+      <name>Evidence Predicate</name>
+      <t>An Access Decision Receipt records which decision was made and, via
+<tt>policy_digest</tt>, under which policy. For high-stakes actions the
+decision's evidentiary basis is itself material: was the action cleared because
+data-rights were satisfied, provenance verified, and compliance posture fresh, or
+held because one of those failed? The OPTIONAL <tt>evidence</tt> field records
+that basis. It is defined here for the Access Decision Receipt; other receipt
+types MAY carry it with the same semantics.</t>
+      <artwork><![CDATA[
+"evidence": [
+  { "dimension": "data_rights", "state": "satisfied",
+    "source": {
+      "authority": "Example Fund Administrator",
+      "ref": "sha256:...",
+      "kid": "sb:issuer:9admin7Custo",
+      "alg": "EdDSA",
+    "sig": "<hex signature by the administrator over the claim>" },
+    "as_of": "2026-06-30T21:00:00Z" },
+  { "dimension": "provenance", "state": "failed",
+    "source": { "authority": "runtime:request-origin",
+                "ref": "request/origin-header" } }
+]
+]]></artwork>
+      <section anchor="evidence-fields">
+        <name>Fields</name>
+        <dl>
+          <dt>dimension (REQUIRED):</dt>
+          <dd>
+            <t>The class of evidence. Core values: <tt>"data_rights"</tt>,
+<tt>"provenance"</tt>, <tt>"compliance"</tt>, <tt>"freshness"</tt>,
+<tt>"consent"</tt>, <tt>"identity"</tt>, <tt>"authorization"</tt>,
+<tt>"integrity"</tt>. Implementations MAY define additional dimensions using a
+namespaced extension of the form <tt>x-&lt;vendor&gt;:&lt;name&gt;</tt>, where
+<tt>&lt;vendor&gt;</tt> matches <tt>[a-z0-9]+</tt> and <tt>&lt;name&gt;</tt>
+matches <tt>[a-z0-9_.-]+</tt> (both lowercase).</t>
+          </dd>
+          <dt>state (REQUIRED):</dt>
+          <dd>
+            <t>The evaluated state of this dimension at decision time. One of:
+<tt>"satisfied"</tt>, <tt>"unverified"</tt>, <tt>"stale"</tt>, <tt>"failed"</tt>,
+<tt>"not_applicable"</tt>.</t>
+          </dd>
+          <dt>source (REQUIRED):</dt>
+          <dd>
+            <t>The provenance of the evidence, an object with
+<tt>authority</tt> (the attesting party; advisory), <tt>ref</tt> (a resolvable
+reference or a <tt>"sha256:&lt;hex&gt;"</tt> digest of the attested subject), an
+OPTIONAL <tt>kid</tt> (the attesting authority's key id), an OPTIONAL
+<tt>alg</tt> (the signature algorithm, taking the same values as the
+<tt>alg</tt> member of <xref target="signature-object"/>, and defaulting to
+<tt>"EdDSA"</tt> when absent), and an OPTIONAL <tt>sig</tt> (the authority's
+signature over the JCS-canonical claim, encoded as a lowercase hexadecimal
+string and verifiable under <tt>kid</tt>). As in
+<xref target="signature-object"/>, the encoded length of <tt>sig</tt> is
+determined by <tt>alg</tt> and is not fixed by this document; a relying party
+<bcp14>MUST NOT</bcp14> reject a source signature on encoded length alone.
+An attesting authority need not use the same algorithm as the receipt
+signer.
+See <xref target="evidence-trust-model"/>: a named <tt>authority</tt> or
+<tt>kid</tt> is NOT proof of authorship; only a verified <tt>sig</tt> is.</t>
+          </dd>
+          <dt>as_of (OPTIONAL):</dt>
+          <dd>
+            <t>An RFC 3339 timestamp of when the evidence was current.
+RECOMMENDED for freshness-relevant dimensions.</t>
+          </dd>
+        </dl>
+        <t>The signed <tt>claim</tt> is the JSON object built from the entry's
+<tt>dimension</tt>, <tt>state</tt>, and <tt>as_of</tt> together with the source's
+<tt>ref</tt>: <tt>{ dimension, ref, state }</tt> plus an <tt>as_of</tt> member when
+the entry carries one. When <tt>as_of</tt> is absent the <tt>as_of</tt> member is
+OMITTED from the claim; it MUST NOT be encoded as <tt>null</tt>. The producer
+canonicalizes this object under JCS and signs the resulting bytes;
+<tt>source.sig</tt> is that signature. A relying party reconstructs the same claim
+from the entry and verifies <tt>source.sig</tt> over its JCS bytes.</t>
+      </section>
+      <section anchor="evidence-properties">
+        <name>Properties</name>
+        <t><tt>evidence</tt> is OPTIONAL and additive. A verifier that does not
+understand it MUST still verify the receipt's signature and chain; the field is
+covered by the signature (tamper-evident) but requires no verifier action. It is
+canonicalized under JCS with the rest of the payload and is therefore signed. It
+MUST NOT carry raw evidence content (positions, prompts, tool payloads); it
+carries states, references, digests, and timestamps only.</t>
+        <t>Evidence entries MAY be committed and selectively disclosed under
+<xref target="commitment-mode"/>. When they are, the unit of disclosure
+<bcp14>MUST</bcp14> be the whole entry. A producer <bcp14>MUST NOT</bcp14>
+disclose an entry's <tt>dimension</tt> and <tt>state</tt> while withholding its
+<tt>source</tt>, because a relying party cannot apply
+<xref target="evidence-trust-model"/> to an entry whose source it cannot see,
+and a disclosed <tt>"satisfied"</tt> with no visible source is precisely the
+false assurance <xref target="evidence-false-assurance"/> warns against.
+Withholding an entry in full is permitted; a relying party
+<bcp14>MUST NOT</bcp14> infer from a disclosed set that no further entries
+exist.</t>
+      </section>
+      <section anchor="evidence-trust-model">
+        <name>Trust Model</name>
+        <t><tt>evidence</tt> is a set of claims made by the receipt SIGNER.
+Every field of every entry, including <tt>source.authority</tt> and
+<tt>source.kid</tt>, is inside the payload the signer fully controls; the receipt
+signature proves only that the signer ASSERTED them. A present or trusted-looking
+<tt>source.kid</tt> is therefore NOT proof that the named authority attested
+anything. It is exactly the in-payload, signer-controlled value that
+<xref target="key-distribution-and-trust-anchors"/> warns is "strictly worse than
+no signature at all, because it provides false assurance."</t>
+        <t>A relying party MUST NOT treat any <tt>evidence</tt> dimension as
+INDEPENDENT corroboration unless ALL of the following hold: (1) the entry carries
+a <tt>source.sig</tt>; (2) the relying party obtains the corresponding public key
+OUT OF BAND via the mechanisms in
+<xref target="key-distribution-and-trust-anchors"/> (not from the receipt) and
+confirms that key's identifier equals <tt>source.kid</tt>; (3) the relying party's
+out-of-band trust policy identifies the source key as belonging to a control domain
+DISTINCT from the receipt signer. At a minimum, the source public key MUST NOT equal
+the key that signed the enclosing receipt; and (4) <tt>source.sig</tt> verifies under
+that key over the JCS bytes of the claim.</t>
+        <t>Condition 3 is load-bearing: every relying party MUST already pin the
+receipt signer's own key out of band, because that is the only way to verify the
+receipt at all. Public-key inequality alone is necessary but not sufficient: the
+relying party also needs a trust-policy determination that the source key is outside
+the receipt signer's control. Without this requirement, a receipt signer could sign
+an <tt>evidence</tt> claim with its OWN key, satisfy conditions 1, 2, and 4, and
+manufacture "independent" corroboration of itself. An entry whose
+<tt>source.kid</tt> resolves to the receipt's signing key, or whose control domain
+cannot be established independently, is self-attestation and MUST NOT be counted as
+independent corroboration.</t>
+        <t>A dimension without a verifiable, independent <tt>source.sig</tt> is
+the receipt signer's own claim and MUST NOT raise the assurance a relying party
+places in the decision, regardless of the <tt>authority</tt> or <tt>kid</tt> it
+names. Producers SHOULD mark a self-attested basis with an <tt>authority</tt> of
+<tt>runtime:&lt;component&gt;</tt>, but this labelling is advisory: because the
+producer controls it, a relying party MUST identify a non-corroborating dimension
+by the ABSENCE of a verifiable, independent <tt>source.sig</tt>, not by trusting
+the label.</t>
+        <t>A verified <tt>source.sig</tt> proves only that the authority attested
+the claim tuple; it does NOT prove the authority observed or endorsed the
+enclosing decision. The claim binds nothing from the receipt (no
+<tt>session_id</tt>, <tt>policy_digest</tt>, <tt>tool_name</tt>, or
+<tt>decision</tt>), so the same signed claim may lawfully appear in many receipts.
+A relying party MUST additionally judge whether the claim's <tt>ref</tt> and
+<tt>as_of</tt> pertain to the action being decided, and SHOULD bound acceptance by
+<tt>as_of</tt>.</t>
+      </section>
+    </section>
     <section anchor="signing-and-verification">
       <name>Signing and Verification</name>
       <section anchor="signing-process">
@@ -558,9 +738,18 @@ fields.</t>
             <t>Construct the payload object with all required fields.</t>
           </li>
           <li>
-            <t>Canonicalize the payload using JCS <xref target="RFC8785"/>. The canonical
-form is a deterministic JSON serialization with sorted keys
-and no whitespace.</t>
+            <t>Construct the receipt object carrying that payload as its
+<tt>payload</tt> member.</t>
+          </li>
+          <li>
+            <t>Form the signing input for the envelope shape: canonicalize
+the <tt>payload</tt> member using JCS <xref target="RFC8785"/>. The canonical
+form is a deterministic JSON serialization with sorted keys and no
+whitespace. The signing input is the <tt>payload</tt> member alone; it does
+not include the enclosing receipt object. For the flat shape the signing
+input is the receipt minus its <tt>signature</tt> member. See
+<xref target="signature-scope"/>, which an implementation
+<bcp14>MUST</bcp14> consult before computing either.</t>
           </li>
           <li>
             <t>Convert the canonical JSON string to a UTF-8 byte sequence.</t>
@@ -573,30 +762,48 @@ issuer's secret key.</t>
             <t>Encode the signature as a lowercase hexadecimal string.</t>
           </li>
           <li>
-            <t>Construct the signed envelope by wrapping the original
-(non-canonicalized) payload with the signature object.</t>
+            <t>Attach the signature object to the original (non-canonicalized)
+receipt as its <tt>signature</tt> member. The transmitted receipt carries the
+payload exactly as constructed; canonicalization is performed only to derive
+the signing input and its output is not transmitted.</t>
           </li>
         </ol>
       </section>
       <section anchor="verification-process">
         <name>Verification Process</name>
         <ol spacing="normal" type="1"><li>
-            <t>Extract the <tt>payload</tt> and <tt>signature</tt> from the envelope.</t>
+            <t>Determine the receipt shape as defined in
+<xref target="signature-scope"/> and extract the signature. In the envelope
+shape the signature is the <tt>signature</tt> member, an object. In the flat
+shape it is the <tt>signature</tt> member, a hexadecimal string, and the
+algorithm and key identifier are carried as separate members of the
+receipt.</t>
           </li>
           <li>
-            <t>Canonicalize the <tt>payload</tt> using JCS <xref target="RFC8785"/>.</t>
+            <t>Reconstruct the signing input for the shape received, as
+defined in <xref target="signature-scope"/>: for the envelope shape,
+canonicalize the <tt>payload</tt> member as received; for the flat shape,
+canonicalize the receipt minus its <tt>signature</tt> member. This reproduces
+the byte string the signer formed in <xref target="signing-process"/>.
+Applying the wrong shape's rule produces a different byte string and causes
+verification of correctly signed receipts to fail.</t>
           </li>
           <li>
             <t>Convert the canonical JSON to a UTF-8 byte sequence.</t>
           </li>
           <li>
-            <t>Resolve the public key using the <tt>kid</tt> field in the signature.
-The RECOMMENDED resolution mechanism is a JWK Set endpoint
-<xref target="RFC7517"/> at <tt>/.well-known/acta-keys.json</tt>.</t>
+            <t>Resolve the public key using the key identifier carried by the
+receipt. The RECOMMENDED resolution mechanism is a JWK Set endpoint
+<xref target="RFC7517"/> at <tt>/.well-known/acta-keys.json</tt>. The key
+<bcp14>MUST</bcp14> be obtained through that mechanism or another
+out-of-band trust anchor, never from the receipt itself; see
+<xref target="key-distribution-and-trust-anchors"/>.</t>
           </li>
           <li>
-            <t>Verify the Ed25519 signature over the canonical bytes using
-the resolved public key.</t>
+            <t>Verify the signature over the canonical bytes using the
+resolved public key and the algorithm declared by the receipt, not an
+algorithm assumed by the verifier; see
+<xref target="algorithm-agility"/>.</t>
           </li>
           <li>
             <t>If verification succeeds, the receipt is authentic and has not
@@ -642,11 +849,16 @@ tree following <xref target="RFC6962"/> domain-separation conventions.</t>
 recognize this field MUST ignore it when performing signature
 verification, as the field is part of the canonical signed payload but
 its semantics are scoped to consumers that opt into commitment mode.</t>
-      <t>The leaf-level commitment construction is byte-identical to that
-described in <xref target="I-D.ietf-oauth-selective-disclosure-jwt"/>
-("SD-JWT"). The Merkle tree organization is byte-identical to
-Certificate Transparency <xref target="RFC6962"/>. Implementations of
-this extension SHOULD reuse code from those ecosystems where possible.</t>
+      <t>The Merkle tree organization is byte-identical to Certificate
+Transparency <xref target="RFC6962"/>, and implementations SHOULD reuse code
+from that ecosystem.</t>
+      <t>This construction is not SD-JWT. SD-JWT <xref target="RFC9901"/>
+achieves selective disclosure with salted hashes placed in an
+<tt>_sd</tt> array, with no tree; this extension commits to fields through
+an RFC 6962 Merkle tree. The two are different constructions and produce
+different bytes. A deployment that needs selective disclosure over JWT
+claims, and does not need a tree, SHOULD use SD-JWT rather than this
+extension.</t>
 
       <section anchor="commitment-merkle-construction">
         <name>Merkle Tree Construction</name>
@@ -740,6 +952,18 @@ total <tt>tree_size</tt>, and the ordered list of <tt>siblings</tt>
 (hex-encoded SHA-256 hashes) along the path from the leaf to the
 root.</t></li>
         </ol>
+        <t>No left/right indicator is carried for each sibling, and none is
+needed. Because <xref target="commitment-merkle-construction"/> fixes the
+split at the largest power of two strictly less than the node count, the
+side of every sibling is determined by <tt>index</tt> and
+<tt>tree_size</tt> alone, and a verifier <bcp14>MUST</bcp14> derive it
+under that rule. This is deliberate rather than an omission. A verifier
+that instead assumes a padded fixed-depth tree, taking the side from the
+bits of <tt>index</tt> as is common in implementations that pad the leaf
+count up to a power of two, agrees with this construction only when the
+leaf count is already a power of two and diverges at every other size. For
+<tt>tree_size</tt> 5 and <tt>index</tt> 4 the correct path has one element,
+while the padded derivation expects three.</t>
         <t>The verifier reconstructs the leaf hash from the disclosed
 <tt>(name, salt, value)</tt> tuple, walks the inclusion proof, and
 compares the resulting root to <tt>committed_fields_root</tt> in the
@@ -753,27 +977,75 @@ the interim.</t>
 
       <section anchor="signature-scope">
         <name>Signature Scope (Normative Clarification)</name>
-        <t>The Ed25519 (or other algorithm-agile) signature MUST cover
-the canonical JCS bytes of <tt>payload</tt> directly: the UTF-8 byte
-sequence produced by the signing process in Section 4.1, used as the
-message input to the signature algorithm with no intermediate hash.
-Standard PureEdDSA (RFC 8032) hashes the message internally;
-implementations MUST NOT pre-hash the canonical bytes (for example with
-<tt>SHA-256</tt>) before signing. Here <tt>payload</tt> is the receipt
-object with the <tt>signature</tt> field removed prior to canonicalization.
-The <tt>signature</tt> field MUST be removed from the object, not set to
-<tt>null</tt> or to the empty string; these produce different JCS output
-and break interoperability.</t>
+        <t>The signature MUST cover the canonical JCS bytes of the
+<em>signing input</em> directly: the UTF-8 byte sequence produced by the
+signing process in <xref target="signing-process"/>, used as the message
+input to the signature algorithm with no intermediate hash.</t>
+        <t>Two receipt shapes are in use, and the signing input differs
+between them. An implementation <bcp14>MUST</bcp14> determine the shape
+before computing the signing input, and <bcp14>MUST NOT</bcp14> apply one
+shape's rule to the other; the two produce different byte strings, and
+crossing them causes verification of correctly signed receipts to fail.</t>
+        <dl>
+          <dt>Envelope shape:</dt>
+          <dd>
+            <t>The receipt is the object shown in
+<xref target="signed-envelope"/>, carrying exactly two members: a
+<tt>payload</tt> member and a <tt>signature</tt> member that is an object
+with <tt>alg</tt>, <tt>kid</tt>, and <tt>sig</tt>. The signing input is
+<tt>JCS(payload)</tt>: the <tt>payload</tt> member canonicalized on its own,
+not the enclosing receipt object.</t>
+          </dd>
+          <dt>Flat shape:</dt>
+          <dd>
+            <t>The receipt carries its fields at the top level alongside a
+<tt>signature</tt> member that is a hexadecimal string. There is no
+<tt>payload</tt> member to canonicalize, so the signing input is the receipt
+object with the <tt>signature</tt> member removed, canonicalized. This shape
+predates the envelope and remains in use; new implementations
+<bcp14>SHOULD</bcp14> emit the envelope shape.</t>
+          </dd>
+        </dl>
+        <t>In both shapes the signing input excludes the signature, and in
+neither is the signature computed over a receipt that already contains
+one.</t>
+        <t>In either shape the object canonicalized
+<bcp14>MUST NOT</bcp14> contain a <tt>signature</tt> member, and that member
+<bcp14>MUST NOT</bcp14> be included as <tt>null</tt> or as the empty string;
+these produce different JCS output and break interoperability.</t>
+        <t>The <tt>alg</tt> and <tt>kid</tt> members of the signature object
+are therefore not covered by the signature. A verifier resolves the key from
+<tt>kid</tt> through the mechanisms in
+<xref target="key-distribution-and-trust-anchors"/> and verification fails if
+either member is altered, so this is not a substitution vector, but a verifier
+<bcp14>MUST NOT</bcp14> treat either member as attested content.</t>
+        <t>Standard PureEdDSA <xref target="RFC8032"/> hashes the message
+internally; implementations <bcp14>MUST NOT</bcp14> pre-hash the
+canonical bytes (for example with <tt>SHA-256</tt>) before signing.</t>
       </section>
 
       <section anchor="chain-hash-scope">
         <name>Chain Hash Scope (Normative Clarification)</name>
-        <t>The <tt>previousReceiptHash</tt> field MUST be the lowercase
-hex encoding of <tt>SHA-256(JCS(receipt))</tt>, where <tt>receipt</tt>
-is the entire signed receipt object including the <tt>signature</tt>
-field. Including the signature in the chain hash binds the chain to
-specific signed bytes, so re-signing an identical payload produces a
-distinct chain link.</t>
+        <t>The <tt>previousReceiptHash</tt> field <bcp14>MUST</bcp14> be
+the string <tt>"sha256:"</tt> followed by the lowercase hex encoding of
+<tt>SHA-256(JCS(receipt))</tt>, where <tt>receipt</tt> is the entire signed
+receipt object including the <tt>signature</tt> member. For example:
+<tt>"sha256:6699b21fea5819eea4df..."</tt>.</t>
+        <t>Two choices here are deliberate.</t>
+        <t>The preimage is the whole receipt, not its <tt>payload</tt>
+member. Including the signature binds the chain to specific signed bytes, so
+re-signing an identical payload, after a key rotation for instance, produces
+a distinct chain link and is visible as a chain event. Hashing the payload
+alone would make a re-signed receipt indistinguishable from the original,
+which is the opposite of what a chain is for.</t>
+        <t>The algorithm prefix makes the digest self-describing, matching
+the form used by <tt>policy_digest</tt> and by <tt>source.ref</tt> in
+<xref target="evidence-predicate"/>. A verifier <bcp14>MUST</bcp14> reject a
+<tt>previousReceiptHash</tt> whose prefix names an algorithm it does not
+implement, rather than assuming SHA-256 from the length. A bare hex digest
+with no prefix is the encoding used by earlier revisions; verifiers
+<bcp14>MAY</bcp14> accept it for compatibility but <bcp14>MUST NOT</bcp14>
+emit it.</t>
       </section>
 
       <section anchor="policy-digest-construction">
@@ -878,12 +1150,15 @@ compatibility with existing credentials, particularly those used in
 MUST verify each receipt against the algorithm declared in its own
 <tt>signature.alg</tt> field. Chains MAY contain receipts signed under
 different algorithms; verifiers MUST handle each receipt independently.</t>
-        <t>The Merkle tree, hash chain, and JCS canonicalization
-constructions are post-quantum-safe (SHA-256 provides 128-bit
-security against quantum pre-image and collision attacks). The only
-classical-cryptography component in this specification is the outer
-signature, which the algorithm-agility mechanism above allows to
-upgrade in place.</t>
+        <t>The hash-based constructions in this document degrade gracefully
+under quantum attack rather than breaking. Grover's algorithm reduces
+SHA-256 pre-image resistance to roughly 2^128 work, which remains
+infeasible. Collision resistance is already bounded at 2^128 classically by
+the birthday bound, and known quantum collision methods do not improve on
+that at any practical memory or time cost. These constructions therefore
+need no change. The classical-cryptography component is the outer
+signature, which the algorithm agility above allows to be upgraded in
+place.</t>
       </section>
 
       <section anchor="zk-context-binding">
@@ -983,7 +1258,7 @@ to per-request proof-of-possession using DPoP <xref target="RFC9449"/>. The
 identity key to one or more P-256 DPoP keys.</t>
         <t>This binding creates a verifiable delegation chain:</t>
         <artwork><![CDATA[
-Operator → Agent Identity (Ed25519) → Request Auth (P-256 DPoP)
+Operator -> Agent Identity (Ed25519) -> Request Auth (P-256 DPoP)
 ]]></artwork>
       </section>
     </section>
@@ -991,10 +1266,20 @@ Operator → Agent Identity (Ed25519) → Request Auth (P-256 DPoP)
       <name>Security Considerations</name>
       <section anchor="replay-protection">
         <name>Replay Protection</name>
-        <t>Receipts include an <tt>issued_at</tt> timestamp but do not include a nonce
-or sequence number. Verifiers SHOULD reject receipts with timestamps
-that are unreasonably old (implementation-defined; 24 hours is
-RECOMMENDED as a default).</t>
+        <t>Receipts include an <tt>issued_at</tt> timestamp but do not
+include a nonce or sequence number.</t>
+        <t>This guidance applies to <em>live presentation</em>: a receipt
+offered as evidence of a currently effective authorization. In that case
+verifiers <bcp14>SHOULD</bcp14> reject receipts whose timestamps are
+unreasonably old (implementation-defined; 24 hours is
+<bcp14>RECOMMENDED</bcp14> as a default).</t>
+        <t>It does not apply to <em>archival verification</em>: examining a
+receipt as a record of what was authorized at some past time, which is one
+of the purposes stated in <xref target="introduction"/>. Applying a
+freshness window there would reject every receipt in an audit older than
+the window. A verifier performing archival verification
+<bcp14>SHOULD NOT</bcp14> apply one, and <bcp14>SHOULD</bcp14> report the
+receipt's age rather than deciding on the caller's behalf.</t>
         <t>For environments requiring stronger replay protection, implementations
 MAY add a <tt>nonce</tt> field to the payload.</t>
       </section>
@@ -1085,6 +1370,91 @@ conformance gap. A negative conformance test vector set
 required rejection behavior across representative envelope shapes
 (flat v1, structured v2, Passport-style, full-JWK-embedded).</t>
       </section>
+          <section anchor="verification-not-in-receipt">
+        <name>Verifier Identity Is Not Receipt Content</name>
+        <t>A receipt is signed by its issuer at issue time. Nothing a verifier
+learns or computes later can be added to it without invalidating that
+signature. A field describing which verifier checked a receipt therefore
+cannot be a member of the signed payload, and a prior revision of this
+document listed one.</t>
+        <t>Where a deployment needs to record which verifier performed a check,
+that belongs in a separate verification report that references the receipt by
+its hash and is signed by the verifier. Such a report is out of scope for this
+document. A verifier <bcp14>MUST NOT</bcp14> add members to a receipt it has
+verified, and a consumer <bcp14>MUST NOT</bcp14> treat any member of a receipt
+as evidence about the party that verified it.</t>
+      </section>
+      <section anchor="chain-completeness">
+        <name>Chain Completeness and Truncation</name>
+        <t>A receipt chain proves that the receipts a verifier holds have not
+been altered and have not been reordered. It does not prove that the verifier
+holds all of them.</t>
+        <t>Removing receipts from the end of a chain leaves every remaining
+link and every remaining signature valid. A verifier presented with the
+truncated set cannot distinguish it from a complete one, because nothing in
+the set commits to how long the set is. This is the omission most worth
+guarding against: the receipt an operator would prefer a reviewer not to see
+is usually the most recent. Removing receipts from the middle is detectable,
+since the next receipt's <tt>previousReceiptHash</tt> will not match, and
+that difference is easy to mistake for completeness.</t>
+        <t>Detecting truncation requires a commitment, external to the chain,
+to the number of receipts and the terminal hash at a given point, signed by
+the issuer. A verifier that checks a chain against such a commitment can
+detect omission at the end; a verifier given no commitment
+<bcp14>MUST NOT</bcp14> report the set as complete, and
+<bcp14>SHOULD</bcp14> report that it verified integrity only.</t>
+        <t>The commitment is only worth as much as its location. Stored
+alongside the receipts it describes, it is deletable by whoever deletes the
+receipts, and the truncated set verifies clean again. It constrains an issuer
+only once it has reached somewhere that issuer cannot later rewrite. This
+document does not specify that destination, which depends on what
+infrastructure the deployment already has and what an adversary controls
+within it.</t>
+        <t>A further property is out of scope here: these mechanisms let one
+verifier detect omission from the set it was given, but they do not establish
+that every verifier was given the same set. An issuer can maintain divergent
+histories and show each verifier a self-consistent one. Detecting that
+requires verifiers to compare what they were shown, through a mechanism such
+as a witnessed or gossiped log, and no construction in this document provides
+it.</t>
+      </section>
+      <section anchor="decision-versus-execution">
+        <name>Decisions Are Not Executions</name>
+        <t>An Access Decision Receipt attests that a policy was evaluated and
+what it returned. It does not attest that the action then executed, that it
+succeeded, or what it returned. An <tt>"allow"</tt> receipt records
+permission, not performance, and a verifier
+<bcp14>MUST NOT</bcp14> read one as evidence that the tool ran.</t>
+        <t>Where a deployment needs the executed fact, that is a separate
+post-execution receipt issued after the invocation returns, binding the
+decision it acted on to the observed outcome.
+<tt>tool_duration_ms</tt> and <tt>sandbox_state</tt>
+(<xref target="payload"/>) belong to that second receipt, and their presence
+in a receipt is what distinguishes it from a decision-time one. The value
+<tt>"require_approval"</tt> makes the same separation explicit for held
+actions.</t>
+        <t>Conflating the two is a common error in receipt formats, and it
+fails in the direction that matters: a reviewer concludes an action occurred
+because it was permitted, or that it was blocked because no execution receipt
+exists, when the receipt set only ever established the decision.</t>
+      </section>
+      <section anchor="evidence-false-assurance">
+        <name>Evidence Predicate: False Assurance</name>
+        <t>The OPTIONAL <tt>evidence</tt> field (<xref target="evidence-predicate"/>)
+can make a decision LOOK well-founded without being so: <tt>source.authority</tt>,
+<tt>source.kid</tt>, and the dimension states are all under the receipt signer's
+control. A relying party MUST derive assurance ONLY from <tt>source.sig</tt> values
+it verifies under out-of-band-pinned keys that are DISTINCT from the receipt signer
+(see <xref target="evidence-trust-model"/>), never from the presence of
+<tt>evidence</tt>, a plausible <tt>authority</tt>, or a matching <tt>kid</tt>. Two
+forgeries are defeated by the trust model, each exercised as a negative reference
+vector (<xref target="I-D.agent-governance-testvectors"/>) that verifies as a
+receipt yet corroborates nothing: a named-key forgery (a trusted <tt>kid</tt>
+copied in with no valid <tt>sig</tt>) and self-corroboration (the signer signs the
+claim with its own key). An implementation that surfaces <tt>evidence</tt> to a
+human or a downstream policy MUST visibly distinguish dimensions carrying an
+independent, verified <tt>source.sig</tt> from those that do not.</t>
+      </section>
     </section>
     <section anchor="iana-considerations">
       <name>IANA Considerations</name>
@@ -1097,6 +1467,12 @@ required rejection behavior across representative envelope shapes
         <li>
           <t>A well-known URI suffix for <tt>/.well-known/acta-keys.json</tt>.</t>
         </li>
+        <li>
+          <t>A media type for the receipt serialization defined in this
+document. Receipts are currently exchanged as <tt>application/json</tt>,
+which does not let a recipient distinguish a receipt from arbitrary JSON
+before parsing it.</t>
+        </li>
       </ul>
     </section>
   </middle>
@@ -1105,6 +1481,27 @@ required rejection behavior across representative envelope shapes
       <name>References</name>
       <references anchor="sec-normative-references">
         <name>Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+
         <reference anchor="RFC8032" target="https://www.rfc-editor.org/info/rfc8032" xml:base="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8032.xml">
           <front>
             <title>Edwards-Curve Digital Signature Algorithm (EdDSA)</title>
@@ -1219,6 +1616,28 @@ required rejection behavior across representative envelope shapes
       </references>
       <references anchor="sec-informative-references">
         <name>Informative References</name>
+        <reference anchor="RFC9497" target="https://www.rfc-editor.org/info/rfc9497">
+          <front>
+            <title>Oblivious Pseudorandom Functions (OPRFs) Using Prime-Order Groups</title>
+            <author fullname="A. Davidson" initials="A." surname="Davidson"/>
+            <author fullname="C. A. Wood" initials="C. A." surname="Wood"/>
+            <date month="December" year="2023"/>
+          </front>
+          <seriesInfo name="RFC" value="9497"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9497"/>
+        </reference>
+        <reference anchor="RFC9901" target="https://www.rfc-editor.org/info/rfc9901">
+          <front>
+            <title>Selective Disclosure for JSON Web Tokens (SD-JWT)</title>
+            <author fullname="D. Fett" initials="D." surname="Fett"/>
+            <author fullname="K. Yasuda" initials="K." surname="Yasuda"/>
+            <author fullname="B. Campbell" initials="B." surname="Campbell"/>
+            <date month="November" year="2025"/>
+          </front>
+          <seriesInfo name="RFC" value="9901"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9901"/>
+        </reference>
+
         <reference anchor="MCP" target="https://modelcontextprotocol.io/specification">
           <front>
             <title>Model Context Protocol Specification</title>
@@ -1243,15 +1662,6 @@ required rejection behavior across representative envelope shapes
             <author>
               <organization>Google</organization>
             </author>
-            <date year="2026"/>
-          </front>
-        </reference>
-        <reference anchor="I-D.ietf-oauth-selective-disclosure-jwt" target="https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/">
-          <front>
-            <title>Selective Disclosure for JWTs (SD-JWT)</title>
-            <author fullname="D. Fett" initials="D." surname="Fett"/>
-            <author fullname="K. Yasuda" initials="K." surname="Yasuda"/>
-            <author fullname="B. Campbell" initials="B." surname="Campbell"/>
             <date year="2026"/>
           </front>
         </reference>
@@ -1304,7 +1714,7 @@ Lifecycle Receipts, Spending Authority Receipts.</t>
             <t>Licensing: MIT.</t>
           </li>
           <li>
-            <t>Version: 0.5.0.</t>
+            <t>Version: 0.11.1.</t>
           </li>
         </ul>
       </section>
@@ -1568,14 +1978,14 @@ const receipt = signReceipt(
         <name>Step 3: Verify (CLI)</name>
         <artwork><![CDATA[
 $ npx @veritasacta/verify receipt.json --key issuer-public.json
-✓ Signature valid
-✓ Issuer: sb:issuer:4Kpm7Q3wXx2b
-✓ Decision: allow (deploy)
-✓ Issued: 2026-03-22T14:32:06.551Z
+[ok] Signature valid
+[ok] Issuer: sb:issuer:4Kpm7Q3wXx2b
+[ok] Decision: allow (deploy)
+[ok] Issued: 2026-03-22T14:32:06.551Z
 ]]></artwork>
       </section>
     </section>
-    <section anchor="changes-from-01">
+    <section anchor="changes-from-02">
       <name>Changes from -02</name>
       <ul>
         <li><t>New normative section <xref target="policy-digest-construction"/>:
@@ -1590,12 +2000,123 @@ bundle bytes alone.</t></li>
         <li><t>Access decision receipts: <tt>"require_approval"</tt> added
 to the <tt>decision</tt> value set for actions held pending human
 approval.</t></li>
+        <li><t>New OPTIONAL predicate <xref target="evidence-predicate"/>:
+records the evidentiary basis a decision rested on (dimension, state,
+source, and an optional <tt>as_of</tt>), additive and ignorable by existing
+verifiers. <xref target="evidence-trust-model"/> states the condition under
+which a dimension counts as independent corroboration, and
+<xref target="evidence-false-assurance"/> records the false-assurance risk:
+every field is inside the payload the receipt signer controls, so a named
+authority or key id is not proof that the named authority attested
+anything.</t></li>
+        <li><t><xref target="chain-hash-scope"/>: <tt>previousReceiptHash</tt>
+carries an explicit <tt>"sha256:"</tt> prefix, matching
+<tt>policy_digest</tt> and <tt>source.ref</tt> rather than being the one bare
+digest in the document, and the preimage is stated as the whole receipt with
+its signature. Implementations differed on both points: some hashed the
+payload alone, which cannot distinguish a re-signed receipt from the
+original, and some encoded as base64url. The bare-hex form is accepted for
+compatibility and no longer emitted.</t></li>
+        <li><t><xref target="payload"/>: <tt>verifier_sigil</tt> is
+removed. It described the verifier that checked a receipt but was listed as
+a signed payload member, which cannot be produced: the issuer signs the
+payload before any verifier sees it. See
+<xref target="verification-not-in-receipt"/>.</t></li>
+        <li><t><xref target="signed-envelope"/>: names the envelope as the
+shape new implementations emit and points at the flat shape, rather than
+presenting one shape as the only receipt and introducing the second
+later.</t></li>
+        <li><t><xref target="verification-process"/>: the procedure no longer
+assumes the envelope in the steps around the signing input. It extracted a
+<tt>payload</tt> member a flat receipt does not have, read the key identifier
+from a signature object a flat receipt does not have, and named Ed25519 in a
+document that permits ES256.</t></li>
+        <li><t><xref target="commitment-mode"/>: removed a claim that the
+leaf construction is byte-identical to SD-JWT. It is not. SD-JWT
+(<xref target="RFC9901"/>, which also replaces a citation to an expired
+draft) uses salted hashes in an <tt>_sd</tt> array with no tree, while this
+builds an RFC 6962 Merkle tree. Deployments that need selective disclosure
+over JWT claims and no tree are now pointed at SD-JWT instead.</t></li>
+        <li><t><xref target="algorithm-agility"/>: corrected the
+post-quantum paragraph, which claimed SHA-256 gives 128-bit security against
+quantum collision attacks. Collision resistance is already 128-bit
+classically by the birthday bound; Grover applies to pre-image.</t></li>
+        <li><t>Corrected the receipt type count, which said four and listed
+six; added the missing normative references for <xref target="RFC2119"/>,
+<xref target="RFC8174"/> and <xref target="RFC9497"/>; removed a reference to
+a <tt>policy_id</tt> field this document does not define.</t></li>
+        <li><t>New <xref target="chain-completeness"/>: a chain proves no
+alteration and no reordering, not that the verifier holds every receipt.
+Truncating the newest receipts leaves all remaining links and signatures
+valid, detecting it requires an external commitment to count and terminal
+hash, and that commitment constrains an issuer only once it reaches
+somewhere the issuer cannot rewrite. Records non-equivocation as out of
+scope rather than implied.</t></li>
+        <li><t>New <xref target="decision-versus-execution"/>: a decision
+receipt attests policy evaluation, not that the action executed. Names the
+post-execution receipt as the separate artifact and identifies the fields
+that distinguish one from the other, a distinction the prior text carried
+only in a single field description.</t></li>
+        <li><t><xref target="payload"/>: <tt>evidence</tt> and
+<tt>committed_fields_root</tt> are listed in the common payload table.
+Both were defined in their own sections and appeared in no field table,
+the same omission reported against <tt>previousReceiptHash</tt>. The
+table's scope is now stated, so a member defined elsewhere that may
+appear in any payload type is listed there.</t></li>
+        <li><t><xref target="evidence-fields"/>: <tt>source.sig</tt> is no
+longer pinned to Ed25519 at a fixed length. It takes an OPTIONAL
+<tt>alg</tt> defaulting to <tt>"EdDSA"</tt>, and its encoded length
+derives from that algorithm. The prior text would have excluded an
+attesting authority holding P-256 keys, including implementations of the
+ES256 profile this document already permits for receipt
+signatures.</t></li>
+        <li><t><xref target="evidence-properties"/>: specifies how evidence
+composes with <xref target="commitment-mode"/>. The unit of selective
+disclosure is the whole entry, because disclosing a dimension and state
+without its source strips the independence signal the trust model depends
+on.</t></li>
+        <li><t><xref target="signature-scope"/>,
+<xref target="signing-process"/>, and
+<xref target="verification-process"/>: the signing input is now named once and
+defined in one place. The prior text described the signature as covering
+<tt>payload</tt> and then redefined <tt>payload</tt> mid-sentence to mean
+the receipt with its signature removed, so the two sections specified
+different byte strings. The signing input is the receipt without its
+<tt>signature</tt> member. The verification procedure carried the same
+defect. Checking the deployed implementations showed the two statements
+were not a drafting error but two real receipt shapes described in one
+place: an envelope carrying a <tt>payload</tt> member and a structured
+signature, signed over <tt>JCS(payload)</tt>, and a flat form carrying its
+fields at the top level with a hexadecimal signature, signed over the
+receipt minus that member. Both are in use and both verify today.
+<xref target="signature-scope"/> now defines the shapes separately and
+requires an implementation to determine the shape before computing the
+signing input.</t></li>
+        <li><t><xref target="payload"/>: <tt>previousReceiptHash</tt> is
+listed as an optional payload member with its cardinality and genesis
+behaviour, having previously been defined only inside the optional
+commitment extension and listed in no field table.</t></li>
+        <li><t><xref target="signature-object"/>: the fixed 128-character
+signature length is removed and the algorithm list defers to
+<xref target="algorithm-agility"/>. The prior text pinned an
+Ed25519-sized encoding that the agility section's own recommended
+algorithms cannot satisfy.</t></li>
+        <li><t><xref target="commitment-disclosure"/>: states that the
+sibling side in an inclusion proof is derived from <tt>index</tt> and
+<tt>tree_size</tt> under the split rule and is deliberately not carried,
+so implementers do not assume a padded fixed-depth tree and diverge on
+non-power-of-two trees.</t></li>
+        <li><t><xref target="replay-protection"/>: the freshness window is
+scoped to live presentation and explicitly does not apply to archival
+verification, which it would otherwise have rejected wholesale.</t></li>
+        <li><t>Change-log appendices: corrected a crossed anchor and an
+appendix that named the wrong source revision.</t></li>
       </ul>
     </section>
     <section anchor="changes-01">
       <name>Changes from -01</name>
       <t>This section summarizes the changes from
-draft-farley-acta-signed-receipts-02.</t>
+draft-farley-acta-signed-receipts-01.</t>
       <dl>
         <dt>action_ref:</dt>
         <dd>
@@ -1664,8 +2185,7 @@ carries software decisions and physical-world observations.</t>
 fields and SLSA v1.0 provenance predicates. When an AI agent
 builds software and protect-mcp generates a signed receipt chain,
 the chain constitutes build provenance at SLSA L1/L2. The
-<tt>policy_id</tt> and <tt>policy_digest</tt> fields provide governance
-metadata that standard SLSA provenance does not carry.</t>
+<tt>policy_digest</tt> field provides governance metadata that standard SLSA provenance does not carry.</t>
         </dd>
         <dt>Implementation count:</dt>
         <dd>
@@ -1684,12 +2204,31 @@ protocol, an infrastructure for verifiable machine decision-making.
 The design draws on work in the IETF OAuth and Web Authentication
 communities, particularly RFC 9449 (DPoP) for proof-of-possession
 patterns and RFC 8785 (JCS) for deterministic serialization.</t>
+      <t>The evidence predicate in <xref target="evidence-predicate"/>
+originated in a proposal from Seydou Diaby of UseTruth, who identified that a
+receipt records which decision was made but not the basis it rested on, and
+who contributed the closed value sets and the structured <tt>source</tt>
+object. The requirement that the attesting key be independent of the receipt
+signer, and the false-assurance analysis that follows from it, were developed
+jointly.</t>
+      <t>Thanks to Michael Msebenzi for a detailed errata review of the
+-02 revision, conducted by building an independent verifier and
+recomputing against pinned bytes. That review identified the signing-scope
+contradiction between Sections 2.2, 4.1 and 5.6, the unspecified location
+and lifecycle of <tt>previousReceiptHash</tt>, the conflict between the
+fixed signature length and algorithm agility, the freshness window's
+effect on archival verification, the absent note on deriving sibling side
+in inclusion proofs, and errors in the change-log appendices. All are
+addressed in this revision.</t>
       <t>Thanks to Sam Gardner for identifying an inconsistency in the
-signature preimage definition in the -01 revision, where Section 5.6
-described signing over SHA-256(JCS(payload)) while Sections 2.1.1, 4.1,
-and 4.2 sign over the canonical JCS bytes directly. Section 5.6 is
-corrected in this revision to match the canonical signing process in
-Section 4.1.</t>
+signature preimage definition in the -01 revision, where the signature
+scope section described signing over SHA-256(JCS(payload)) while the
+signature object and the signing and verification procedures signed over
+the canonical JCS bytes directly. The signature scope section
+(<xref target="signature-scope"/>) was corrected in -02 to match the
+signing process (<xref target="signing-process"/>). Sections are named
+rather than numbered here because the numbering has changed across
+revisions.</t>
       <t>The <tt>action_ref</tt> normative definition was developed in
 collaboration with the Agent Passport System project. The
 <tt>verifier_sigil</tt> mechanism was motivated by the Sigil visual
