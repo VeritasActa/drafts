@@ -1,4 +1,4 @@
-[![IETF Draft: Signed Receipts](https://img.shields.io/badge/IETF-draft--farley--acta--signed--receipts--01-blue)](https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/)
+[![IETF Draft: Signed Receipts](https://img.shields.io/badge/IETF-draft--farley--acta--signed--receipts--03-blue)](https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/)
 [![IETF Draft: Knowledge Units](https://img.shields.io/badge/IETF-draft--farley--acta--knowledge--units--00-blue)](https://datatracker.ietf.org/doc/draft-farley-acta-knowledge-units/)
 [![npm: @veritasacta/verify](https://img.shields.io/npm/v/@veritasacta/verify?label=verifier)](https://www.npmjs.com/package/@veritasacta/verify)
 
