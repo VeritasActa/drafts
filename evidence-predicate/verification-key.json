@@ -1,0 +1,20 @@
+{
+  "note": "Public verification key for receipt-with-evidence.example.json. TEST KEY (deterministic sha256-derived seed) - NOT for production. Signed with @veritasacta/artifacts (same lib the verifier uses).",
+  "kid": "Ww07PFw0Y5vsBsIOSKXnM7b6NDll_kkHvuQH-OI9YjA",
+  "receipt_signer_jwk": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "kid": "Ww07PFw0Y5vsBsIOSKXnM7b6NDll_kkHvuQH-OI9YjA",
+    "x": "vltmO7oXgJKDl5HewavpxFHwdzurDeYxKe9crlGhv6c",
+    "use": "sig"
+  },
+  "receipt_signer_hex": "be5b663bba178092839791dec1abe9c451f0773bab0de63129ef5cae51a1bfa7",
+  "provenance_authority_jwk": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "kid": "prov-authority-1",
+    "x": "LrM5y4jg12tpH4ntu2YJo_8UQGvgOs9akkjufJ-COZk",
+    "use": "sig"
+  },
+  "canonicalization": "strip `signature`, canonicalize (JCS sorted keys, ASCII-only) the rest, Ed25519 verify (RFC 8032)"
+}
