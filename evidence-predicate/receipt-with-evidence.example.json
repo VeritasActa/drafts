@@ -1,0 +1,67 @@
+{
+  "v": 2,
+  "type": "decision_receipt",
+  "algorithm": "ed25519",
+  "kid": "Ww07PFw0Y5vsBsIOSKXnM7b6NDll_kkHvuQH-OI9YjA",
+  "issuer": "ut:issuer:usetruth.ai",
+  "issued_at": "2026-07-10T16:30:00Z",
+  "payload": {
+    "decision": "deny",
+    "policy_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "scope": "tenant:test-acme",
+    "tool": "DeleteGithubRepository",
+    "tier": "signed-known",
+    "mode": "enforce",
+    "reason_code": "freshness_failed",
+    "request_id": "req_test_0001",
+    "evidence": {
+      "claims": {
+        "entitlement_verified_by_runtime": false
+      },
+      "dimensions": [
+        {
+          "dimension": "data_rights",
+          "state": "satisfied",
+          "source": {
+            "issuer": "did:web:evidence.usetruth.ai",
+            "ref": "https://evidence.usetruth.ai/.well-known/jwks.json",
+            "kid": "ev-2026-07"
+          }
+        },
+        {
+          "dimension": "provenance",
+          "state": "satisfied",
+          "source": {
+            "issuer": "ut:issuer:provenance-authority",
+            "key": {
+              "kty": "OKP",
+              "crv": "Ed25519",
+              "kid": "prov-authority-1",
+              "x": "LrM5y4jg12tpH4ntu2YJo_8UQGvgOs9akkjufJ-COZk",
+              "use": "sig"
+            }
+          }
+        },
+        {
+          "dimension": "freshness",
+          "state": "failed",
+          "source": {
+            "issuer": "did:web:evidence.usetruth.ai",
+            "ref": "https://evidence.usetruth.ai/.well-known/jwks.json",
+            "kid": "ev-2026-07"
+          }
+        },
+        {
+          "dimension": "contradiction",
+          "state": "unverified",
+          "source": {
+            "issuer": "did:web:evidence.usetruth.ai",
+            "ref": "https://evidence.usetruth.ai/.well-known/jwks.json",
+            "kid": "ev-2026-07"
+          }
+        }
+      ]
+    }
+  },
+  "signature": "664164673f7911d70bc976fc372b49162d83bb7b7f9b45c70ccf9d099598830d208a1a436f9c8f24cd92731f100940ae11286f30f0e3d53c34ce27f5cb1cdf0c"
+}
