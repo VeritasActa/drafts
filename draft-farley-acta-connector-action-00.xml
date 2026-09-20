@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rfc [
+  <!ENTITY nbsp    "&#160;">
+  <!ENTITY zwsp   "&#8203;">
+  <!ENTITY nbhy   "&#8209;">
+  <!ENTITY wj     "&#8288;">
+]>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" category="info" docName="draft-farley-acta-connector-action-00" ipr="trust200902" submissionType="independent" version="3" xml:lang="en">
+  <front>
+    <title abbrev="Acta Connector-Action Profile">Connector-Action Profile for Acta Signed Receipts</title>
+    <seriesInfo name="Internet-Draft" value="draft-farley-acta-connector-action-00"/>
+    <author fullname="Tom Farley" initials="T." surname="Farley">
+      <organization>ScopeBlind</organization>
+      <address>
+        <postal>
+          <city>Sydney</city>
+          <country>Australia</country>
+        </postal>
+        <email>tom@scopeblind.com</email>
+        <uri>https://veritasacta.com</uri>
+      </address>
+    </author>
+    <date year="2026" month="September" day="20"/>
+    <area>Security</area>
+    <keyword>agent</keyword>
+    <keyword>connector</keyword>
+    <keyword>receipt</keyword>
+    <keyword>grant</keyword>
+    <keyword>MCP</keyword>
+    <abstract>
+      <t>Personal agent platforms let an agent act through connectors: a tool call reaches a service carrying a real credential, while the grant the person gave the agent stays inside the platform. After the fact, the person, the platform, and the service each hold a different log, and none of them can show a third party what was authorized, what was received, and what happened.</t>
+      <t>This document profiles Acta signed receipts for connector actions. A platform presents, with each tool call, a small context naming the platform, the acting agent, and the grant. The recorder of the receipt, a gate in front of the service or the service itself, writes that context into the receipt exactly as presented, records separately what it could verify about it, binds the digest of the call it actually received, and, when it observes the effect, the digest of what the service read back. The receipt stays verifiable offline under the base specification, and a verifier holding the platform's key can test the platform's signature without trusting the recorder.</t>
+    </abstract>
+  </front>
+  <middle>
+    <section anchor="intro">
+      <name>Introduction</name>
+      <t>An agent platform that runs personal agents (Meta's Muse, a coding agent such as Claude Code or Codex, any client of the Model Context Protocol) reaches services through connectors. The platform decides what its agent may do: a grant for one action, a session, a task, a bounded time, or standing permission. The connected service sees none of that. It receives an ordinary call with an ordinary credential.</t>
+      <t>Three consequences follow. The service cannot tell a call the person granted from a call the agent invented. Nobody can later prove to a third party which grant a call was made under. And when the action is disputed, the person's log, the platform's log, and the service's log disagree about what was sent and what was done.</t>
+      <t>The base specification <xref target="ACTA"/> defines signed receipts for tool decisions. This document adds a profile for connector actions: a context object the platform presents with a call, and a member on the decision receipt in which the recorder writes that context, its own check of it, the digest of the call as received, and the observed effect. The profile keeps presented facts and verified facts apart. A platform may claim any grant. Only a signature under a key the recorder or the verifier trusts turns the claim into evidence, and the receipt says which it holds.</t>
+      <t>The profile changes nothing about how a receipt is signed or verified. A verifier that does not implement it ignores the member. A verifier that does implement it applies the rules in <xref target="verification"/> in addition to those of the base specification.</t>
+      <section anchor="terminology">
+        <name>Terminology</name>
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and only when, they appear in all capitals, as shown here.</t>
+        <dl>
+          <dt>platform</dt><dd>The system that runs the agent and holds the person's grant to it.</dd>
+          <dt>agent</dt><dd>The software acting for a person through the platform.</dd>
+          <dt>grant</dt><dd>What the person allowed the agent to do, as the platform records it.</dd>
+          <dt>context</dt><dd>The object the platform presents with a call: platform, agent, grant, and optionally the digest of the mandate the grant sits under.</dd>
+          <dt>recorder</dt><dd>The party that issues the decision receipt for the call: a gate in front of the service, or the service itself.</dd>
+          <dt>effect</dt><dd>What the service reports it did, read back after the action.</dd>
+          <dt>verifier</dt><dd>Any party checking the receipt later, with or without keys beyond the recorder's.</dd>
+        </dl>
+      </section>
+    </section>
+
+    <section anchor="context">
+      <name>The Connector Context</name>
+      <t>The context is a JSON object the platform builds once per call. It is either presented bare or wrapped as an Acta envelope and signed by the platform.</t>
+      <section anchor="context-fields">
+        <name>Fields</name>
+        <sourcecode type="json"><![CDATA[
+{
+  "type": "acta:connector-context",
+  "platform": "meta.muse",
+  "agent": "agent-e8d36428",
+  "grant": {
+    "type": "task",
+    "id": "grant-42",
+    "purpose": "Prepare the client review of pull request 25",
+    "issued_at": "2026-09-20T05:44:36.339Z",
+    "expires_at": "2026-09-21T05:44:36.339Z"
+  },
+  "mandate_digest": "sha256:aaaa...",
+  "issued_at": "2026-09-20T05:45:00.000Z",
+  "issuer_id": "sb:platform:vector-muse"
+}
+]]></sourcecode>
+        <dl>
+          <dt>type (REQUIRED)</dt><dd>The string "acta:connector-context".</dd>
+          <dt>platform (REQUIRED)</dt><dd>A stable name for the platform: lowercase letters, digits, dots and hyphens, at most 200 characters, such as "meta.muse" or "anthropic.claude-code".</dd>
+          <dt>agent (REQUIRED)</dt><dd>The platform's identifier or public key for the acting agent, at most 200 characters.</dd>
+          <dt>grant (REQUIRED)</dt><dd>An object. Its member type (REQUIRED) is one of "one_time", "session", "task", "time_bounded", "perpetual". Its members id and purpose are OPTIONAL strings, at most 200 and 500 characters. Its members issued_at and expires_at are OPTIONAL <xref target="RFC3339"/> timestamps in UTC; when both are present, expires_at MUST be later than issued_at. The meaning of each grant type is the platform's; the profile records the type, it does not define the platform's permission model.</dd>
+          <dt>mandate_digest (OPTIONAL)</dt><dd>The digest of the signed standard or mandate the grant sits under, in the form "sha256:" followed by 64 lowercase hexadecimal characters, computed as a policy digest under Section 6.8 of <xref target="ACTA"/>.</dd>
+          <dt>issued_at (OPTIONAL)</dt><dd>When the platform built the context, as an <xref target="RFC3339"/> timestamp in UTC.</dd>
+          <dt>issuer_id (REQUIRED when signed)</dt><dd>The platform's key identifier. It MUST equal the kid of the signature that covers the context, so that the signer's identity sits inside the signed bytes.</dd>
+        </dl>
+        <t>No other members are permitted. String members MUST NOT contain control characters. A context that fails any rule in this section is malformed.</t>
+      </section>
+      <section anchor="context-signing">
+        <name>Signing</name>
+        <t>A platform that can sign presents the context as an envelope: an object with the context as its payload member and a signature object with alg, kid and sig as its signature member. The signing input is the JCS <xref target="RFC8785"/> canonicalization of the payload alone, and the signature is Ed25519 <xref target="RFC8032"/> over those UTF-8 bytes, exactly as Section 5.1 of <xref target="ACTA"/> specifies for a receipt. A platform that cannot sign presents an envelope with the payload member only.</t>
+        <t>The platform's key is distributed out of band. A recorder or verifier MUST NOT take a key from the context, from the call, or from the receipt as the key to verify under; see Section 9.5 of <xref target="ACTA"/>.</t>
+      </section>
+      <section anchor="context-transport">
+        <name>Presentation over the Model Context Protocol</name>
+        <t>Over MCP <xref target="MCP"/> the platform places the envelope in the request metadata of a tools/call request under the key "veritasacta.com/connector":</t>
+        <sourcecode type="json"><![CDATA[
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "prepare_repository_review",
+    "arguments": { "pull_number": 25 },
+    "_meta": {
+      "veritasacta.com/connector": {
+        "payload": { "type": "acta:connector-context", "...": "..." },
+        "signature": {
+          "alg": "EdDSA",
+          "kid": "sb:platform:vector-muse",
+          "sig": "..."
+        }
+      }
+    }
+  }
+}
+]]></sourcecode>
+        <t>Other transports carry the same envelope in whatever metadata channel they have. The recorder reads the context from the call it received; it never reconstructs one.</t>
+      </section>
+    </section>
+
+    <section anchor="member">
+      <name>The connector Member on a Decision Receipt</name>
+      <t>A recorder that received a context with a call adds a connector member to the payload of the decision receipt it issues for that call, as defined in Section 3.1 of <xref target="ACTA"/>. The member is covered by the receipt signature like every other payload member.</t>
+      <section anchor="member-fields">
+        <name>Fields</name>
+        <sourcecode type="json"><![CDATA[
+"connector": {
+  "v": 1,
+  "context": { "type": "acta:connector-context", "...": "..." },
+  "context_signature": {
+    "alg": "EdDSA",
+    "kid": "sb:platform:vector-muse",
+    "sig": "..."
+  },
+  "context_check": "valid",
+  "platform_kid": "sb:platform:vector-muse",
+  "request_digest": "c7d2...",
+  "effect": {
+    "status": "confirmed",
+    "readback_digest": "9f1a...",
+    "observed_at": "2026-09-20T06:09:00.000Z"
+  }
+}
+]]></sourcecode>
+        <dl>
+          <dt>v (REQUIRED)</dt><dd>The integer 1.</dd>
+          <dt>context (REQUIRED)</dt><dd>The presented context, verbatim, as defined in <xref target="context-fields"/>.</dd>
+          <dt>context_signature (OPTIONAL)</dt><dd>The presented signature object, verbatim. Present exactly when the platform presented one.</dd>
+          <dt>context_check (REQUIRED)</dt><dd>What the recorder itself established: "unsigned" when no signature was presented; "unverifiable" when a signature was presented but the recorder held no key for its kid; "valid" when the recorder verified the signature under a key it holds for that kid; "invalid" when it held such a key and the signature did not verify.</dd>
+          <dt>platform_kid (REQUIRED when context_check is "valid", otherwise absent)</dt><dd>The kid of the key the recorder verified under. It MUST equal the kid of context_signature.</dd>
+          <dt>request_digest (REQUIRED)</dt><dd>The SHA-256 digest, as 64 lowercase hexadecimal characters, of the JCS canonicalization of the object {"tool": name, "input": arguments} built from the call as the recorder received it, where input is an empty object when the call carried no arguments. See <xref target="digests"/>.</dd>
+          <dt>effect (OPTIONAL)</dt><dd>An object. Its member status (REQUIRED) is one of "confirmed", "refused", "not_observed". Its member readback_digest is the SHA-256 digest, as 64 lowercase hexadecimal characters, of the JCS canonicalization of what the service read back after acting; it is REQUIRED when status is "confirmed". Its member observed_at is an OPTIONAL <xref target="RFC3339"/> timestamp in UTC.</dd>
+        </dl>
+        <t>No other members are permitted.</t>
+      </section>
+      <section anchor="recorder-rules">
+        <name>Recorder Rules</name>
+        <ul>
+          <li>The recorder MUST write the context and its signature exactly as presented. It MUST NOT normalize, complete, or repair them.</li>
+          <li>The recorder MUST set context_check from its own verification only. A platform's statement about its own signature, or about the grant, MUST NOT influence the value.</li>
+          <li>The recorder MUST NOT record a malformed context. It MAY refuse the call, and it SHOULD log that a context was ignored, but the receipt it issues carries no connector member for a context the profile would reject.</li>
+          <li>The recorder MUST compute request_digest from the call it received, never from a digest the platform presented.</li>
+          <li>The recorder MUST add effect only after it has observed the effect, and MUST NOT set status to "confirmed" without a readback it computed the digest of.</li>
+          <li>A recorder that issues one receipt per decision, as a gate does, attaches the member to the receipt of the decision for that call. A recorder that also observes the effect MAY issue a second receipt for the same call carrying the effect, chained to the first under Section 6.7 of <xref target="ACTA"/>.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section anchor="verification">
+      <name>Verification</name>
+      <t>A verifier that implements this profile first verifies the receipt under Section 5.2 of <xref target="ACTA"/>. A receipt whose signature does not verify is invalid before the profile is consulted; a tampered connector member breaks the receipt signature like any other tampered member.</t>
+      <section anchor="verification-schema">
+        <name>Schema</name>
+        <t>The verifier checks the member against <xref target="member-fields"/> and <xref target="context-fields"/>, including the consistency rules: context_check "unsigned" only without a signature, any other value only with one; platform_kid present exactly when context_check is "valid" and equal to the signature kid; context.issuer_id equal to the signature kid whenever a signature is present; readback_digest present whenever effect.status is "confirmed". A member that fails is a payload that does not satisfy the schema of its declared type in the sense of Section 5.3 of <xref target="ACTA"/>, and the receipt is invalid.</t>
+      </section>
+      <section anchor="verification-platform">
+        <name>The Platform Signature</name>
+        <t>When context_signature is present and the verifier holds a key for its kid obtained outside the receipt, the verifier MUST verify the signature over the JCS canonicalization of context under that key. If it does not verify, the receipt is invalid: the recorded context is not what the platform signed, whatever context_check says. If it verifies, the verifier reports so; a recorded context_check of "invalid" or "unverifiable" then tells the verifier that the recorder held a different key, or none, for that kid, which the verifier SHOULD surface as a warning.</t>
+        <t>When context_signature is present and the verifier holds no key for its kid, the platform signature is unverifiable. This is not a failure. The verifier MUST report it as such, MUST NOT report the receipt invalid on that account, and SHOULD say that the recorded context_check is the recorder's word alone.</t>
+        <t>When context_signature is absent, nothing about the grant is established beyond the platform's presentation, and the verifier MUST say so.</t>
+      </section>
+      <section anchor="verification-outcomes">
+        <name>Outcomes</name>
+        <t>The three outcomes of Section 5.3 of <xref target="ACTA"/> apply to the receipt as a whole. Within the profile, the verifier MUST distinguish, in every form of output a consumer can act on: whether the member is well formed; the recorded context_check; and the verifier's own result for the platform signature, one of "absent", "unverifiable", "valid", "invalid". The reference verifier names the two ways a receipt fails under the profile: connector_schema_invalid and connector_context_signature_invalid.</t>
+      </section>
+      <section anchor="proves">
+        <name>What the Member Proves</name>
+        <t>A valid receipt with a well-formed member proves that the recorder received a call whose digest is request_digest, that the platform presented exactly the recorded context with it, and, when effect is present, what the recorder observed the service report. With a platform signature that verifies under a trusted key it also proves that the platform stood behind that context at the time. It does not prove that the person understood the grant, that the grant type means what the verifier assumes, that the service did what it reported, or anything about calls that carried no context.</t>
+      </section>
+    </section>
+
+    <section anchor="digests">
+      <name>Digest Construction</name>
+      <t>Every digest in this profile is SHA-256 over the UTF-8 bytes of the JCS <xref target="RFC8785"/> canonicalization of a JSON value, encoded as 64 lowercase hexadecimal characters. request_digest is computed over {"tool": name, "input": arguments}, with the arguments object as received and an empty object when there were none; member order in the source does not matter because JCS sorts it. readback_digest is computed over the JSON value the service read back, as the recorder holds it. mandate_digest carries the "sha256:" prefix because it is a policy digest under Section 6.8 of <xref target="ACTA"/>; the other two carry none because they are content digests in the style of action_ref in Section 2.2 of <xref target="ACTA"/>.</t>
+    </section>
+
+    <section anchor="vectors">
+      <name>Test Vectors</name>
+      <t>Seven vectors are published with the reference implementation at https://github.com/scopeblind/scopeblind-gateway in the file vectors/connector-action.v1.json. Each is a complete decision receipt signed by a fixed gate key, with a connector member, the platform key the profile expects the verifier to be given, and the outcome required with and without that key. Keys and timestamps are fixed, so the file is reproducible byte for byte from the source that builds it.</t>
+        <dl>
+          <dt>unsigned-context</dt><dd>A bare context; recorded as unsigned; valid either way.</dd>
+          <dt>signed-context-valid-confirmed</dt><dd>A signed context the recorder verified, with a confirmed effect and its readback digest; valid either way; with the key the platform signature is valid.</dd>
+          <dt>signed-context-unverifiable-at-the-gate</dt><dd>A signed context the recorder held no key for; valid either way; with the key the verifier reports the signature valid and warns that the recorder could not check it.</dd>
+          <dt>tampered-context-recorded-as-valid</dt><dd>The recorded context differs from what the platform signed, yet context_check says valid. Invalid with the key (connector_context_signature_invalid); without the key the claim is unverifiable and the receipt stays valid with that warning.</dd>
+          <dt>grant-type-outside-the-profile</dt><dd>grant.type is "forever"; invalid either way (connector_schema_invalid).</dd>
+          <dt>confirmed-effect-without-readback</dt><dd>effect.status is "confirmed" with no readback_digest; invalid either way.</dd>
+          <dt>unsigned-context-recorded-as-valid</dt><dd>No signature, yet context_check says valid and names a platform key; invalid either way.</dd>
+        </dl>
+      <t>A conformant verifier reaches every listed outcome. A verifier that reports the tampered vector valid while holding the platform key is taking the recorder's word for the platform signature, which this profile exists to make unnecessary.</t>
+    </section>
+
+    <section anchor="security">
+      <name>Security Considerations</name>
+      <t>The security considerations of <xref target="ACTA"/> apply. In addition:</t>
+      <ul>
+        <li>Presented is not verified. The member's design keeps the platform's presentation, the recorder's check, and the verifier's own check as three separate facts. Implementations MUST NOT collapse them, for instance by omitting context_check, or by treating a recorded "valid" as proof without holding the key.</li>
+        <li>A platform that signs contexts attests that its agent acted under a grant it recorded. It does not attest that the person read or understood the grant, and a verifier MUST NOT present the receipt as the person's consent to the specific call. What the person agreed to is carried, when at all, by the mandate the mandate_digest names, under whatever rules govern that mandate.</li>
+        <li>request_digest binds the call, not the moment. Replay is addressed by the receipt's issued_at, by the chain of Section 6.7 of <xref target="ACTA"/>, and by whatever nonce or idempotency the service applies; the profile adds no replay protection of its own.</li>
+        <li>grant.purpose is free text written by a platform or a person and may contain personal data. Platforms SHOULD keep it short and specific to the action. Verifiers do not need it to reach any outcome in <xref target="verification"/>, and receipts intended for wide distribution SHOULD carry it under the selective disclosure of Section 6 of <xref target="ACTA"/> where that is in use.</li>
+        <li>Platform keys are trust anchors and MUST be distributed as such: published by the platform at a stable location or given to the recorder and verifier through a channel the platform controls. A recorder configured with a wrong key records "invalid" for honest contexts; a verifier with the right key will then report the discrepancy, which is the intended behaviour.</li>
+        <li>A recorder that is the service itself attests its own effect. A gate in front of the service that reads the effect back through the service's interface attests what the service told it. Neither is an independent witness of the world; effect records what was read back, and the receipt says by whom.</li>
+      </ul>
+    </section>
+
+    <section anchor="iana">
+      <name>IANA Considerations</name>
+      <t>This document has no IANA actions. The type string "acta:connector-context" and the member name connector are used under the conventions of <xref target="ACTA"/>, which defines no registry for them at this revision.</t>
+    </section>
+  </middle>
+  <back>
+    <references>
+      <name>References</name>
+      <references>
+        <name>Normative References</name>
+        <reference anchor="ACTA" target="https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/">
+          <front>
+            <title>Signed Decision Receipts for Machine-to-Machine Access Control</title>
+            <author initials="T." surname="Farley"/>
+            <date year="2026" month="September"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-farley-acta-signed-receipts-04"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner"/>
+            <date year="1997" month="March"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba"/>
+            <date year="2017" month="May"/>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+        </reference>
+        <reference anchor="RFC8032" target="https://www.rfc-editor.org/info/rfc8032">
+          <front>
+            <title>Edwards-Curve Digital Signature Algorithm (EdDSA)</title>
+            <author initials="S." surname="Josefsson"/>
+            <author initials="I." surname="Liusvaara"/>
+            <date year="2017" month="January"/>
+          </front>
+          <seriesInfo name="RFC" value="8032"/>
+        </reference>
+        <reference anchor="RFC8785" target="https://www.rfc-editor.org/info/rfc8785">
+          <front>
+            <title>JSON Canonicalization Scheme (JCS)</title>
+            <author initials="A." surname="Rundgren"/>
+            <author initials="B." surname="Jordan"/>
+            <author initials="S." surname="Erdtman"/>
+            <date year="2020" month="June"/>
+          </front>
+          <seriesInfo name="RFC" value="8785"/>
+        </reference>
+        <reference anchor="RFC3339" target="https://www.rfc-editor.org/info/rfc3339">
+          <front>
+            <title>Date and Time on the Internet: Timestamps</title>
+            <author initials="G." surname="Klyne"/>
+            <author initials="C." surname="Newman"/>
+            <date year="2002" month="July"/>
+          </front>
+          <seriesInfo name="RFC" value="3339"/>
+        </reference>
+      </references>
+      <references>
+        <name>Informative References</name>
+        <reference anchor="MCP" target="https://modelcontextprotocol.io/specification/">
+          <front>
+            <title>Model Context Protocol Specification</title>
+            <author>
+              <organization>Anthropic, PBC and contributors</organization>
+            </author>
+            <date year="2025"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section anchor="example">
+      <name>Example Receipt</name>
+      <t>The second vector, abbreviated. The gate recorded a signed context it verified, and the confirmed effect of a repository update read back from the service.</t>
+      <sourcecode type="json"><![CDATA[
+{
+  "payload": {
+    "type": "protectmcp:decision",
+    "tool_name": "prepare_repository_review",
+    "decision": "allow",
+    "reason": "default_allow",
+    "policy_digest": "sha256:bbbb...",
+    "request_id": "vector-2",
+    "mode": "enforce",
+    "spec": "draft-farley-acta-signed-receipts-04",
+    "connector": {
+      "v": 1,
+      "context": {
+        "type": "acta:connector-context",
+        "platform": "meta.muse",
+        "agent": "agent-e8d36428",
+        "grant": {
+          "type": "task",
+          "id": "grant-42",
+          "purpose": "Prepare the client review of pull request 25",
+          "issued_at": "2026-09-20T05:44:36.339Z",
+          "expires_at": "2026-09-21T05:44:36.339Z"
+        },
+        "mandate_digest": "sha256:aaaa...",
+        "issued_at": "2026-09-20T05:45:00.000Z",
+        "issuer_id": "sb:platform:vector-muse"
+      },
+      "context_signature": {
+        "alg": "EdDSA",
+        "kid": "sb:platform:vector-muse",
+        "sig": "..."
+      },
+      "context_check": "valid",
+      "platform_kid": "sb:platform:vector-muse",
+      "request_digest": "...",
+      "effect": {
+        "status": "confirmed",
+        "readback_digest": "...",
+        "observed_at": "2026-09-20T06:09:00.000Z"
+      }
+    },
+    "issued_at": "2026-09-20T06:00:00.000Z",
+    "issuer_id": "sb:issuer:..."
+  },
+  "signature": {
+    "alg": "EdDSA", "kid": "sb:issuer:...", "sig": "..."
+  }
+}
+]]></sourcecode>
+    </section>
+    <section anchor="ack">
+      <name>Acknowledgements</name>
+      <t>The three-way split of presented, checked, and verified came out of a rehearsal in which a personal agent prepared shared work through a connector and two people decided on their own devices. The rehearsal showed that the one thing a service never learns is the grant, and that a receipt which merely repeats the platform's claim would have been worse than none.</t>
+    </section>
+  </back>
+</rfc>
