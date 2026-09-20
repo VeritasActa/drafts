@@ -291,7 +291,9 @@ Internet-Draft        Acta Connector-Action Profile       September 2026
        "arguments": { "pull_number": 25 },
        "_meta": {
          "veritasacta.com/connector": {
-           "payload": { "type": "acta:connector-context", "...": "..." },
+           "payload": {
+             "type": "acta:connector-context", "...": "..."
+           },
            "signature": {
              "alg": "EdDSA",
              "kid": "sb:platform:vector-muse",
@@ -314,8 +316,6 @@ Internet-Draft        Acta Connector-Action Profile       September 2026
    the receipt signature like every other payload member.
 
 3.1.  Fields
-
-
 
 
 
