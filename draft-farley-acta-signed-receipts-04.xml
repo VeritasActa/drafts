@@ -18,7 +18,7 @@
         <email>tom@scopeblind.com</email>
       </address>
     </author>
-    <date year="2026" month="September" day="14"/>
+    <date year="2026" month="September" day="24"/>
     <area>Security</area>
     <workgroup>Independent</workgroup>
     <keyword>MCP</keyword>
@@ -800,16 +800,23 @@ out-of-band trust anchor, never from the receipt itself; see
 <xref target="key-distribution-and-trust-anchors"/>.</t>
           </li>
           <li>
+            <t>If the key source provides a validity window for the key, apply
+it to the receipt's <tt>issued_at</tt> as defined in
+<xref target="key-validity-windows"/>.</t>
+          </li>
+          <li>
             <t>Verify the signature over the canonical bytes using the
 resolved public key and the algorithm declared by the receipt, not an
 algorithm assumed by the verifier; see
 <xref target="algorithm-agility"/>.</t>
           </li>
           <li>
-            <t>If verification succeeds, the receipt is authentic and has not
-been tampered with. If verification fails, the receipt MUST be
-rejected. If the verifier cannot carry out step 4 or step 5, the
-outcome is undecidable, as defined in
+            <t>If verification succeeds and the receipt was not issued outside
+its key's validity window, the receipt is authentic and has not been
+tampered with. If verification fails, or the receipt was issued outside
+its key's validity window, the receipt MUST be rejected. If the verifier
+cannot carry out step 4 or step 6, or cannot apply in step 5 a window
+the key source provides, the outcome is undecidable, as defined in
 <xref target="verification-outcomes"/>, and the receipt MUST NOT be
 reported as either authentic or rejected.</t>
           </li>
@@ -824,21 +831,24 @@ can act on, including any process exit status:</t>
           <dt>valid:</dt>
           <dd><t>The signing input was reconstructed for the shape received, a
 verification key was obtained from a trust anchor outside the receipt,
-and the signature verified under it.</t></dd>
+and the signature verified under it. Where the key source provides a
+validity window for the key, the receipt was issued inside it.</t></dd>
           <dt>invalid:</dt>
           <dd><t>The check ran and failed: the signature did not verify under
 the trust-anchored key, a carried key differs from the trust-anchored
-key, a digest or chain link does not match, or the signed payload does
-not satisfy the schema of its declared type. An invalid receipt MUST be
-rejected.</t></dd>
+key, the receipt was issued outside its key's validity window, a digest
+or chain link does not match, or the signed payload does not satisfy the
+schema of its declared type. An invalid receipt MUST be rejected.</t></dd>
           <dt>undecidable:</dt>
           <dd><t>The check could not run. No verification key was available
 from a trust anchor outside the receipt (including the case where the
 only key on offer is one carried inside the signed bytes, which
 <xref target="key-distribution-and-trust-anchors"/> forbids using), the
 receipt shape was not recognized, the signature or payload member was
-absent, the algorithm was unsupported, or the input was not well-formed
-JSON. An undecidable outcome MUST name its cause.</t></dd>
+absent, the algorithm was unsupported, a validity window the key source
+provides could not be applied, a window the relying party requires was
+absent, or the input was not well-formed JSON. An undecidable outcome
+MUST name its cause.</t></dd>
         </dl>
         <t>An undecidable outcome MUST NOT be reported as invalid, because
 nothing about the receipt has been shown false, and MUST NOT be reported
@@ -878,6 +888,57 @@ as specified in <xref target="RFC8037"/>.</t>
         <t>For offline verification, public keys MAY be distributed out-of-band
 (e.g., embedded in configuration files, published in DNS TXT records,
 or included in agent manifests).</t>
+      </section>
+      <section anchor="key-validity-windows">
+        <name>Key Validity Windows</name>
+        <t>An issuer that rotates keys publishes, on each JWK in its key set, a
+<tt>valid_from</tt> and a <tt>valid_until</tt> member: timestamps in the
+format of <xref target="RFC3339"/> bounding when the key may be used to sign.
+Either member may be absent; an absent bound leaves the window open on that
+side.</t>
+        <artwork><![CDATA[
+{
+  "kty": "OKP",
+  "crv": "Ed25519",
+  "kid": "sb:issuer:4Kpm7Q3wXx2b",
+  "x": "<base64url-encoded-public-key>",
+  "use": "sig",
+  "valid_from": "2026-01-01T00:00:00Z",
+  "valid_until": "2026-06-01T00:00:00Z"
+}
+]]></artwork>
+        <t>The window runs from <tt>valid_from</tt>, included, to
+<tt>valid_until</tt>, excluded. A receipt whose <tt>issued_at</tt> is before
+<tt>valid_from</tt>, or at or after <tt>valid_until</tt>, was issued outside
+the window. The end is excluded in the way the <tt>exp</tt> claim of
+<xref target="RFC7519"/> is: the moment a key stops being valid is itself
+outside its validity.</t>
+        <t>When the key source provides a window for the key resolved in step 4
+of <xref target="verification-process"/>, a verifier <bcp14>MUST</bcp14>
+apply it to the receipt's <tt>issued_at</tt>:</t>
+        <ul>
+          <li><t>A receipt issued outside the window is invalid, as defined in
+<xref target="verification-outcomes"/>.</t></li>
+          <li><t>If the window cannot be applied, because a bound is not a
+valid timestamp, <tt>valid_until</tt> is not after <tt>valid_from</tt>, or
+the receipt carries no valid <tt>issued_at</tt>, the outcome is undecidable
+and names that cause.</t></li>
+        </ul>
+        <t>When the key source provides no window, the verifier cannot establish
+whether the key was valid when the receipt was issued. It
+<bcp14>MUST</bcp14> report that with its outcome and <bcp14>MUST NOT</bcp14>
+describe the key as valid at <tt>issued_at</tt>. A relying party that needs
+the property <bcp14>MAY</bcp14> require a window; a verifier configured to
+require one reports a key without a window as undecidable, naming the
+missing window as the cause. In every case the verifier's output states
+which of these applied, so that a verifier that does not check windows
+cannot be mistaken for one whose check passed.</t>
+        <t>The <tt>issued_at</tt> member is asserted by the signer. A window
+therefore detects a key still in use after an honest rotation; it does not
+detect a compromised key used to sign receipts dated inside the window.
+Bounding when a receipt was actually issued requires its position in a
+chain whose head is committed somewhere the issuer cannot rewrite; see
+<xref target="chain-completeness"/>.</t>
       </section>
     </section>
     <section anchor="commitment-mode">
@@ -1253,6 +1314,12 @@ suite.</t></li>
           <li><t>The evidence predicate of <xref target="evidence-predicate"/>:
 decision receipts whose evidence entries verify under the named source,
 and structurally malformed entries that do not.</t></li>
+          <li><t>The key validity windows of
+<xref target="key-validity-windows"/>: with a key set that bounds the key, a
+receipt issued inside the window is valid, and receipts issued before
+<tt>valid_from</tt>, exactly at <tt>valid_until</tt>, and after it are
+invalid; with a key set that carries no window, the outcome is valid and
+reports the key's validity at issuance as not established.</t></li>
         </ul>
         <t>For the commitment mode of this section the minimum set is:</t>
         <ul>
@@ -1364,7 +1431,10 @@ MAY add a <tt>nonce</tt> field to the payload.</t>
 that key become suspect. Issuers SHOULD implement key rotation by
 publishing new keys at the well-known endpoint and including a
 <tt>valid_from</tt> / <tt>valid_until</tt> window in the JWK metadata.</t>
-        <t>Verifiers SHOULD check key validity windows when available.</t>
+        <t>Verifiers apply key validity windows as defined in
+<xref target="key-validity-windows"/>. A window detects a key still in use
+after an honest rotation, not a compromised key used to sign receipts dated
+inside the window.</t>
       </section>
       <section anchor="payload-privacy">
         <name>Payload Privacy</name>
@@ -1691,6 +1761,17 @@ before parsing it.</t>
       </references>
       <references anchor="sec-informative-references">
         <name>Informative References</name>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author fullname="M. Jones" initials="M." surname="Jones"/>
+            <author fullname="J. Bradley" initials="J." surname="Bradley"/>
+            <author fullname="N. Sakimura" initials="N." surname="Sakimura"/>
+            <date month="May" year="2015"/>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
         <reference anchor="RFC9497" target="https://www.rfc-editor.org/info/rfc9497">
           <front>
             <title>Oblivious Pseudorandom Functions (OPRFs) Using Prime-Order Groups</title>
@@ -2068,6 +2149,16 @@ invalid, and undecidable; a verifier distinguishes all three in every
 consumable output, an undecidable outcome names its cause, and a gate
 treats it as a failure to verify rather than as tampering or as a pass.
 Step 6 of the verification process refers to it.</t></li>
+        <li><t>Section 5.5 (new): key validity windows. When the key source
+gives a key a <tt>valid_from</tt> / <tt>valid_until</tt> window, applying it
+to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
+<tt>valid_from</tt> and excludes <tt>valid_until</tt>, as RFC 7519 treats
+<tt>exp</tt>. A receipt outside it is invalid, a window that cannot be
+applied is undecidable, and with no window a verifier reports the key's
+validity at issuance as not established rather than as valid. The
+verification process gains a step for it, Section 5.3 lists the new invalid
+and undecidable causes, and Section 6.11 lists the corresponding
+vectors.</t></li>
         <li><t>Section 6.11: the interoperability suite is named, what it
 checks is listed (both shapes, the chain hash rule, the policy digest
 rule, the three outcomes for a key carried inside the signed bytes, the
@@ -2301,6 +2392,12 @@ who contributed the closed value sets and the structured <tt>source</tt>
 object. The requirement that the attesting key be independent of the receipt
 signer, and the false-assurance analysis that follows from it, were developed
 jointly.</t>
+      <t>Thanks to giskard09 (argentum-core), Roberto Locatelli, and
+astrogilda for showing, with published vectors and a second implementation,
+that under the -03 wording a verifier could apply a key's validity window or
+skip it and still conform, which made the outcome for a receipt signed with a
+rotated key a property of the verifier rather than of the receipt. The rule in
+<xref target="key-validity-windows"/> follows from that measurement.</t>
       <t>Thanks to Michael Msebenzi for a detailed errata review of the
 -02 revision, conducted by building an independent verifier and
 recomputing against pinned bytes. That review identified the signing-scope
