@@ -6,6 +6,21 @@
 
 This repository contains the source for IETF Internet-Drafts published by the [Veritas Acta](https://veritasacta.com) protocol project.
 
+## Current status
+
+<!-- release-manifest:start -->
+Verifier: **[0.10.24](https://github.com/VeritasActa/verify/releases/tag/v0.10.24)**. Status reviewed 2026-10-13.
+
+- [draft-farley-acta-signed-receipts-03](https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/): active individual Internet-Draft.
+- [draft-farley-acta-knowledge-units-00](https://datatracker.ietf.org/doc/draft-farley-acta-knowledge-units/): expired individual Internet-Draft (expired 2026-10-08).
+
+Internet-Drafts are proposals, not adopted IETF standards or endorsements.
+<!-- release-manifest:end -->
+
+These are proposals, not adopted IETF standards. The snapshot is generated from
+[the public release manifest](https://github.com/VeritasActa/verify/blob/main/release-manifest.json).
+Datatracker is authoritative. This documentation update does not resubmit a draft.
+
 ## Drafts
 
 ### draft-farley-acta-signed-receipts
@@ -16,16 +31,16 @@ Defines a portable, cryptographically signed receipt format for recording machin
 
 - **Status**: Active, Individual Submission
 - **Datatracker**: [draft-farley-acta-signed-receipts](https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/)
-- **Current revision**: -01
-- **Verifier**: `npx @veritasacta/verify@0.2.5` (Apache-2.0, offline, zero dependencies)
+- **Current revision**: -03
+- **Verifier**: [current release and verification guide](https://github.com/VeritasActa/verify) (Apache-2.0; local receipt/key verification runs offline after installation)
 
 ### draft-farley-acta-knowledge-units
 
 **Knowledge Units for Multi-Model Deliberation**
 
-Defines the Knowledge Unit (KU) format for representing verified knowledge produced through structured multi-model deliberation. A KU captures the question asked, models that participated, consensus achieved, points of agreement and disagreement, and cryptographic receipts binding each deliberation round.
+Defines the Knowledge Unit (KU) format for representing recorded claims and deliberation evidence produced through structured multi-model deliberation. A KU captures the question asked, models that participated, consensus achieved, points of agreement and disagreement, and cryptographic receipts binding each deliberation round.
 
-- **Status**: Submitted, Individual Submission
+- **Status**: Expired on 8 October 2026; individual submission, revision -00
 - **Current revision**: -00
 - **Live implementation**: [acta.today/wiki](https://acta.today/wiki) (50+ Knowledge Units)
 - **Specification**: [acta.today/wiki/spec](https://acta.today/wiki/spec)
@@ -55,7 +70,7 @@ Issues and pull requests are welcome. The drafts follow IETF conventions (RFC 21
 - [protect-mcp](https://www.npmjs.com/package/protect-mcp) (MIT, reference implementation)
 - [protect-mcp-adk](https://pypi.org/project/protect-mcp-adk/) (MIT, Python, Google ADK plugin)
 - [Live Knowledge Base](https://acta.today/wiki)
-- [VeritasActa/Acta](https://github.com/VeritasActa/Acta) -- Protocol implementation and wiki
+- [VeritasActa/Acta](https://github.com/VeritasActa/Acta) -- Public-record reference application and protocol website
 - [ScopeBlind/scopeblind-gateway](https://github.com/ScopeBlind/scopeblind-gateway) -- MCP gateway with Cedar policy engine
 - [ScopeBlind/examples](https://github.com/ScopeBlind/examples) -- Integration examples and interop scenarios
 
