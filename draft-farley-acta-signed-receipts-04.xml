@@ -195,7 +195,9 @@ entirely rather than carrying <tt>null</tt> or an empty string, which
 would produce different JCS output and therefore a different signature.
 A receipt that omits it is either a chain genesis or an unchained
 receipt; the format does not distinguish these, and a verifier
-<bcp14>MUST NOT</bcp14> infer chain membership from its absence.</t>
+<bcp14>MUST NOT</bcp14> infer chain membership from its absence.
+<xref target="chain-link-verification"/> says how a verifier treats an
+omitted or <tt>null</tt> member.</t>
           </dd>
           <dt>evidence (OPTIONAL):</dt>
           <dd>
@@ -837,17 +839,20 @@ validity window for the key, the receipt was issued inside it.</t></dd>
           <dd><t>The check ran and failed: the signature did not verify under
 the trust-anchored key, a carried key differs from the trust-anchored
 key, the receipt was issued outside its key's validity window, a digest
-or chain link does not match, or the signed payload does not satisfy the
-schema of its declared type. An invalid receipt MUST be rejected.</t></dd>
+does not match, a chain link is malformed or a receipt does not follow the
+receipt it is checked against (<xref target="chain-hash-scope"/>), or the
+signed payload does not satisfy the schema of its declared type. An invalid
+receipt MUST be rejected.</t></dd>
           <dt>undecidable:</dt>
           <dd><t>The check could not run. No verification key was available
 from a trust anchor outside the receipt (including the case where the
 only key on offer is one carried inside the signed bytes, which
 <xref target="key-distribution-and-trust-anchors"/> forbids using), the
 receipt shape was not recognized, the signature or payload member was
-absent, the algorithm was unsupported, a validity window the key source
-provides could not be applied, a window the relying party requires was
-absent, or the input was not well-formed JSON. An undecidable outcome
+absent, the algorithm was unsupported, a chain link names a hash algorithm
+other than SHA-256 (<xref target="chain-hash-scope"/>), a validity window the
+key source provides could not be applied, a window the relying party requires
+was absent, or the input was not well-formed JSON. An undecidable outcome
 MUST name its cause.</t></dd>
         </dl>
         <t>A verification can make more than one check. Its outcome is
@@ -1150,12 +1155,69 @@ alone would make a re-signed receipt indistinguishable from the original,
 which is the opposite of what a chain is for.</t>
         <t>The algorithm prefix makes the digest self-describing, matching
 the form used by <tt>policy_digest</tt> and by <tt>source.ref</tt> in
-<xref target="evidence-predicate"/>. A verifier <bcp14>MUST</bcp14> reject a
-<tt>previousReceiptHash</tt> whose prefix names an algorithm it does not
-implement, rather than assuming SHA-256 from the length. A bare hex digest
-with no prefix is the encoding used by earlier revisions; verifiers
-<bcp14>MAY</bcp14> accept it for compatibility but <bcp14>MUST NOT</bcp14>
-emit it.</t>
+<xref target="evidence-predicate"/>. Earlier revisions encoded the same
+digest as bare hex with no prefix.</t>
+        <t>A verifier <bcp14>MUST</bcp14> recognize a link in either of two
+forms: <tt>"sha256:"</tt> followed by exactly 64 lowercase hexadecimal
+characters, or, for compatibility with those revisions only, the same 64
+characters with no prefix, which an issuer <bcp14>MUST NOT</bcp14> emit. Any
+other value of the member, apart from <tt>null</tt>
+(<xref target="chain-link-verification"/>), is not a link to any receipt,
+and is one of two things:</t>
+        <ul>
+          <li><t>A value that begins with a name and a colon is read as naming
+another hash algorithm when the name starts with an ASCII letter or digit,
+contains only ASCII letters, digits, <tt>"."</tt>, <tt>"_"</tt>,
+<tt>"+"</tt> and <tt>"-"</tt>, and is not <tt>"sha256"</tt> when compared
+without regard to case. This document defines links under SHA-256 alone, so a
+verifier <bcp14>MUST NOT</bcp14> accept such a value as a link, whether or not
+it implements the algorithm, and <bcp14>MUST NOT</bcp14> assume SHA-256 from
+the length of what follows. The outcome is undecidable, as defined in
+<xref target="verification-outcomes"/>, and names the algorithm as its
+cause.</t></li>
+          <li><t>Any other value is malformed: a digest in uppercase hexadecimal
+or of the wrong length, another encoding such as base64url, the empty
+string, or a value that is not a string. A verifier <bcp14>MUST</bcp14>
+reject a receipt whose link is malformed, whether or not it holds the
+predecessor: the receipt is invalid, as defined in
+<xref target="verification-outcomes"/>.</t></li>
+        </ul>
+
+        <section anchor="chain-link-verification">
+          <name>Verifying Chain Links</name>
+          <t>When a caller supplies a receipt's predecessor, asserting that the
+receipt follows it, the verifier computes the link of the predecessor as
+defined in <xref target="chain-hash-scope"/> and compares it with the
+receipt's <tt>previousReceiptHash</tt>. The receipt follows the predecessor
+only if that member is the computed link, in either form. If the member is
+absent, <tt>null</tt>, or any other value, the verifier <bcp14>MUST</bcp14>
+report that the receipt does not follow the supplied predecessor. That is a
+failed chain check, and the receipt is invalid, as defined in
+<xref target="verification-outcomes"/>, with one exception: a value naming
+another hash algorithm is undecidable, as <xref target="chain-hash-scope"/>
+states. Absence never satisfies a supplied predecessor. A receipt that omits
+the member is a genesis or an unchained receipt
+(<xref target="payload"/>), and neither follows the receipt supplied.</t>
+          <t>When a caller gives a verifier a sequence of receipts without
+asserting that each follows the one before it, as with a log that holds one
+chain per session, a receipt that omits <tt>previousReceiptHash</tt> begins
+a new chain: it is a genesis or an unchained receipt, as
+<xref target="payload"/> says. The verifier <bcp14>MUST NOT</bcp14> report
+it as linked to the receipt before it, and <bcp14>SHOULD</bcp14> report where
+each chain in the sequence begins. A receipt that carries a link is checked
+against the receipt before it, as for a supplied predecessor.</t>
+          <t>In both cases, a verifier <bcp14>MUST NOT</bcp14> accept a link
+computed over the predecessor's <tt>payload</tt> member alone, in either
+form, as the link of that predecessor. No revision of this document defines
+one, and it would let a re-signed receipt keep the original's link.</t>
+          <t>A <tt>previousReceiptHash</tt> of <tt>null</tt> is never a link to
+any receipt, and an issuer <bcp14>MUST NOT</bcp14> emit one;
+<xref target="payload"/> has the first receipt in a chain omit the member
+instead. Against a supplied predecessor, a <tt>null</tt> link fails as above.
+In a sequence, or on a receipt checked alone, a verifier reads <tt>null</tt>
+as an omitted member, so the receipt begins a chain, and
+<bcp14>SHOULD</bcp14> warn that its issuer emitted a value it must not.</t>
+        </section>
       </section>
 
       <section anchor="policy-digest-construction">
@@ -1303,7 +1365,9 @@ Python gateway hook, pass the suite. The suite exercises:</t>
 each with its own signing-input rule.</t></li>
           <li><t>The chain hash rule of <xref target="chain-hash-scope"/>:
 each receipt's link is computed over the previous receipt as
-transmitted, signature included.</t></li>
+transmitted, signature included. Checked alone, a receipt whose link is
+malformed, either not a digest or in uppercase hexadecimal, is invalid,
+and one whose link names SHA3-256 or SHA-512 is undecidable.</t></li>
           <li><t>The policy digest rule of <xref target="policy-digest-construction"/>:
 the digest is recomputed from the policy bytes as loaded and compared
 with the digest the receipt carries, and a receipt whose digest was not
@@ -2166,6 +2230,23 @@ validity at issuance as not established rather than as valid. The
 verification process gains a step for it, Section 5.3 lists the new invalid
 and undecidable causes, and Section 6.11 lists the corresponding
 vectors.</t></li>
+        <li><t>Section 6.7, and Section 6.7.1 (new): how a verifier treats
+chain links. A verifier must recognize both forms of link:
+<tt>"sha256:"</tt> and 64 lowercase hexadecimal characters, and the bare 64
+characters of earlier revisions (-03 said MAY for the bare form). A value
+whose prefix names another hash algorithm is undecidable, not rejected,
+whether or not the verifier implements that algorithm; -03 said to reject a
+prefix naming an algorithm the verifier does not implement, which left the
+outcome to the verifier. Any other value is malformed, uppercase hexadecimal
+included, and the receipt is invalid whether or not its predecessor is at
+hand. A link over the predecessor's payload alone never matches. Given a
+predecessor by its caller, a receipt follows it only if it carries that
+receipt's link, so an absent or <tt>null</tt> link fails, a case -03 left
+open. Reading a sequence, a receipt without a link begins a new chain and is
+never reported as linked to the one before it, and a <tt>null</tt> link is
+read the same way, with a warning. Section 2.2 points at the new subsection,
+Section 5.3 lists the new invalid and undecidable causes, and Section 6.11
+lists the corresponding vectors.</t></li>
         <li><t>Section 6.11: the interoperability suite is named, what it
 checks is listed (both shapes, the chain hash rule, the policy digest
 rule, the three outcomes for a key carried inside the signed bytes, the
