@@ -18,7 +18,7 @@
         <email>tom@scopeblind.com</email>
       </address>
     </author>
-    <date year="2026" month="September" day="24"/>
+    <date year="2026" month="October" day="19"/>
     <area>Security</area>
     <workgroup>Independent</workgroup>
     <keyword>MCP</keyword>
@@ -811,14 +811,14 @@ algorithm assumed by the verifier; see
 <xref target="algorithm-agility"/>.</t>
           </li>
           <li>
-            <t>If verification succeeds and the receipt was not issued outside
-its key's validity window, the receipt is authentic and has not been
-tampered with. If verification fails, or the receipt was issued outside
-its key's validity window, the receipt MUST be rejected. If the verifier
-cannot carry out step 4 or step 6, or cannot apply in step 5 a window
-the key source provides, the outcome is undecidable, as defined in
-<xref target="verification-outcomes"/>, and the receipt MUST NOT be
-reported as either authentic or rejected.</t>
+            <t>If verification fails, or the receipt was issued outside its
+key's validity window, the receipt MUST be rejected, even if another step
+could not be carried out. Otherwise, if the verifier cannot carry out step&nbsp;4
+or step&nbsp;6, cannot apply in step&nbsp;5 a window the key source provides, or is
+configured to require a window the key source does not provide, the outcome
+is undecidable, as defined in <xref target="verification-outcomes"/>, and
+the receipt MUST NOT be reported as either authentic or rejected. Otherwise
+the receipt is authentic and has not been tampered with.</t>
           </li>
         </ol>
       </section>
@@ -850,6 +850,11 @@ provides could not be applied, a window the relying party requires was
 absent, or the input was not well-formed JSON. An undecidable outcome
 MUST name its cause.</t></dd>
         </dl>
+        <t>A verification can make more than one check. Its outcome is
+invalid if any check ran and failed, even if another could not run, since
+no further check could make the receipt valid; undecidable if none failed
+and at least one could not run; and valid only if every check ran and
+passed.</t>
         <t>An undecidable outcome MUST NOT be reported as invalid, because
 nothing about the receipt has been shown false, and MUST NOT be reported
 as valid, because nothing has been shown true. A consumer that gates an
@@ -895,7 +900,7 @@ or included in agent manifests).</t>
 <tt>valid_from</tt> and a <tt>valid_until</tt> member: timestamps in the
 format of <xref target="RFC3339"/> bounding when the key may be used to sign.
 Either member may be absent; an absent bound leaves the window open on that
-side.</t>
+side. A bound present as <tt>null</tt> is not a valid timestamp.</t>
         <artwork><![CDATA[
 {
   "kty": "OKP",
@@ -2148,7 +2153,9 @@ $ npx @veritasacta/verify receipt.json --key issuer-public.json
 invalid, and undecidable; a verifier distinguishes all three in every
 consumable output, an undecidable outcome names its cause, and a gate
 treats it as a failure to verify rather than as tampering or as a pass.
-Step 6 of the verification process refers to it.</t></li>
+When several checks run, the verification is invalid if any failed, and
+undecidable only if none failed and one could not run. Step 7 of the
+verification process refers to it.</t></li>
         <li><t>Section 5.5 (new): key validity windows. When the key source
 gives a key a <tt>valid_from</tt> / <tt>valid_until</tt> window, applying it
 to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
