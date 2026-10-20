@@ -1205,7 +1205,13 @@ a new chain: it is a genesis or an unchained receipt, as
 <xref target="payload"/> says. The verifier <bcp14>MUST NOT</bcp14> report
 it as linked to the receipt before it, and <bcp14>SHOULD</bcp14> report where
 each chain in the sequence begins. A receipt that carries a link is checked
-against the receipt before it, as for a supplied predecessor.</t>
+against the receipt before it, as for a supplied predecessor, except the
+first receipt of the sequence, which has nothing before it: a link it carries
+is reported, not failed. That receipt begins the sequence's first chain, and
+the verifier <bcp14>SHOULD</bcp14> say that its predecessor was not supplied.
+A log that interleaves the chains of concurrent sessions has to be split into
+its chains before it is read this way, and this document does not define
+how.</t>
           <t>In both cases, a verifier <bcp14>MUST NOT</bcp14> accept a link
 computed over the predecessor's <tt>payload</tt> member alone, in either
 form, as the link of that predecessor. No revision of this document defines
@@ -2244,7 +2250,10 @@ predecessor by its caller, a receipt follows it only if it carries that
 receipt's link, so an absent or <tt>null</tt> link fails, a case -03 left
 open. Reading a sequence, a receipt without a link begins a new chain and is
 never reported as linked to the one before it, and a <tt>null</tt> link is
-read the same way, with a warning. Section 2.2 points at the new subsection,
+read the same way, with a warning. A link on the first receipt of a sequence
+is reported, not failed, since its predecessor was not supplied, and a log
+that interleaves chains has to be split into them first, which this document
+does not define. Section 2.2 points at the new subsection,
 Section 5.3 lists the new invalid and undecidable causes, and Section 6.11
 lists the corresponding vectors.</t></li>
         <li><t>Section 6.11: the interoperability suite is named, what it
