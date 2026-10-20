@@ -18,7 +18,7 @@
         <email>tom@scopeblind.com</email>
       </address>
     </author>
-    <date year="2026" month="September" day="14"/>
+    <date year="2026" month="October" day="19"/>
     <area>Security</area>
     <workgroup>Independent</workgroup>
     <keyword>MCP</keyword>
@@ -195,7 +195,9 @@ entirely rather than carrying <tt>null</tt> or an empty string, which
 would produce different JCS output and therefore a different signature.
 A receipt that omits it is either a chain genesis or an unchained
 receipt; the format does not distinguish these, and a verifier
-<bcp14>MUST NOT</bcp14> infer chain membership from its absence.</t>
+<bcp14>MUST NOT</bcp14> infer chain membership from its absence.
+<xref target="chain-link-verification"/> says how a verifier treats an
+omitted or <tt>null</tt> member.</t>
           </dd>
           <dt>evidence (OPTIONAL):</dt>
           <dd>
@@ -800,18 +802,25 @@ out-of-band trust anchor, never from the receipt itself; see
 <xref target="key-distribution-and-trust-anchors"/>.</t>
           </li>
           <li>
+            <t>If the key source provides a validity window for the key, apply
+it to the receipt's <tt>issued_at</tt> as defined in
+<xref target="key-validity-windows"/>.</t>
+          </li>
+          <li>
             <t>Verify the signature over the canonical bytes using the
 resolved public key and the algorithm declared by the receipt, not an
 algorithm assumed by the verifier; see
 <xref target="algorithm-agility"/>.</t>
           </li>
           <li>
-            <t>If verification succeeds, the receipt is authentic and has not
-been tampered with. If verification fails, the receipt MUST be
-rejected. If the verifier cannot carry out step 4 or step 5, the
-outcome is undecidable, as defined in
-<xref target="verification-outcomes"/>, and the receipt MUST NOT be
-reported as either authentic or rejected.</t>
+            <t>If verification fails, or the receipt was issued outside its
+key's validity window, the receipt MUST be rejected, even if another step
+could not be carried out. Otherwise, if the verifier cannot carry out step&nbsp;4
+or step&nbsp;6, cannot apply in step&nbsp;5 a window the key source provides, or is
+configured to require a window the key source does not provide, the outcome
+is undecidable, as defined in <xref target="verification-outcomes"/>, and
+the receipt MUST NOT be reported as either authentic or rejected. Otherwise
+the receipt is authentic and has not been tampered with.</t>
           </li>
         </ol>
       </section>
@@ -824,22 +833,33 @@ can act on, including any process exit status:</t>
           <dt>valid:</dt>
           <dd><t>The signing input was reconstructed for the shape received, a
 verification key was obtained from a trust anchor outside the receipt,
-and the signature verified under it.</t></dd>
+and the signature verified under it. Where the key source provides a
+validity window for the key, the receipt was issued inside it.</t></dd>
           <dt>invalid:</dt>
           <dd><t>The check ran and failed: the signature did not verify under
 the trust-anchored key, a carried key differs from the trust-anchored
-key, a digest or chain link does not match, or the signed payload does
-not satisfy the schema of its declared type. An invalid receipt MUST be
-rejected.</t></dd>
+key, the receipt was issued outside its key's validity window, a digest
+does not match, a chain link is malformed or a receipt does not follow the
+receipt it is checked against (<xref target="chain-hash-scope"/>), or the
+signed payload does not satisfy the schema of its declared type. An invalid
+receipt MUST be rejected.</t></dd>
           <dt>undecidable:</dt>
           <dd><t>The check could not run. No verification key was available
 from a trust anchor outside the receipt (including the case where the
 only key on offer is one carried inside the signed bytes, which
 <xref target="key-distribution-and-trust-anchors"/> forbids using), the
 receipt shape was not recognized, the signature or payload member was
-absent, the algorithm was unsupported, or the input was not well-formed
-JSON. An undecidable outcome MUST name its cause.</t></dd>
+absent, the algorithm was unsupported, a chain link names a hash algorithm
+other than SHA-256 (<xref target="chain-hash-scope"/>), a validity window the
+key source provides could not be applied, a window the relying party requires
+was absent, or the input was not well-formed JSON. An undecidable outcome
+MUST name its cause.</t></dd>
         </dl>
+        <t>A verification can make more than one check. Its outcome is
+invalid if any check ran and failed, even if another could not run, since
+no further check could make the receipt valid; undecidable if none failed
+and at least one could not run; and valid only if every check ran and
+passed.</t>
         <t>An undecidable outcome MUST NOT be reported as invalid, because
 nothing about the receipt has been shown false, and MUST NOT be reported
 as valid, because nothing has been shown true. A consumer that gates an
@@ -878,6 +898,57 @@ as specified in <xref target="RFC8037"/>.</t>
         <t>For offline verification, public keys MAY be distributed out-of-band
 (e.g., embedded in configuration files, published in DNS TXT records,
 or included in agent manifests).</t>
+      </section>
+      <section anchor="key-validity-windows">
+        <name>Key Validity Windows</name>
+        <t>An issuer that rotates keys publishes, on each JWK in its key set, a
+<tt>valid_from</tt> and a <tt>valid_until</tt> member: timestamps in the
+format of <xref target="RFC3339"/> bounding when the key may be used to sign.
+Either member may be absent; an absent bound leaves the window open on that
+side. A bound present as <tt>null</tt> is not a valid timestamp.</t>
+        <artwork><![CDATA[
+{
+  "kty": "OKP",
+  "crv": "Ed25519",
+  "kid": "sb:issuer:4Kpm7Q3wXx2b",
+  "x": "<base64url-encoded-public-key>",
+  "use": "sig",
+  "valid_from": "2026-01-01T00:00:00Z",
+  "valid_until": "2026-06-01T00:00:00Z"
+}
+]]></artwork>
+        <t>The window runs from <tt>valid_from</tt>, included, to
+<tt>valid_until</tt>, excluded. A receipt whose <tt>issued_at</tt> is before
+<tt>valid_from</tt>, or at or after <tt>valid_until</tt>, was issued outside
+the window. The end is excluded in the way the <tt>exp</tt> claim of
+<xref target="RFC7519"/> is: the moment a key stops being valid is itself
+outside its validity.</t>
+        <t>When the key source provides a window for the key resolved in step 4
+of <xref target="verification-process"/>, a verifier <bcp14>MUST</bcp14>
+apply it to the receipt's <tt>issued_at</tt>:</t>
+        <ul>
+          <li><t>A receipt issued outside the window is invalid, as defined in
+<xref target="verification-outcomes"/>.</t></li>
+          <li><t>If the window cannot be applied, because a bound is not a
+valid timestamp, <tt>valid_until</tt> is not after <tt>valid_from</tt>, or
+the receipt carries no valid <tt>issued_at</tt>, the outcome is undecidable
+and names that cause.</t></li>
+        </ul>
+        <t>When the key source provides no window, the verifier cannot establish
+whether the key was valid when the receipt was issued. It
+<bcp14>MUST</bcp14> report that with its outcome and <bcp14>MUST NOT</bcp14>
+describe the key as valid at <tt>issued_at</tt>. A relying party that needs
+the property <bcp14>MAY</bcp14> require a window; a verifier configured to
+require one reports a key without a window as undecidable, naming the
+missing window as the cause. In every case the verifier's output states
+which of these applied, so that a verifier that does not check windows
+cannot be mistaken for one whose check passed.</t>
+        <t>The <tt>issued_at</tt> member is asserted by the signer. A window
+therefore detects a key still in use after an honest rotation; it does not
+detect a compromised key used to sign receipts dated inside the window.
+Bounding when a receipt was actually issued requires its position in a
+chain whose head is committed somewhere the issuer cannot rewrite; see
+<xref target="chain-completeness"/>.</t>
       </section>
     </section>
     <section anchor="commitment-mode">
@@ -1084,12 +1155,75 @@ alone would make a re-signed receipt indistinguishable from the original,
 which is the opposite of what a chain is for.</t>
         <t>The algorithm prefix makes the digest self-describing, matching
 the form used by <tt>policy_digest</tt> and by <tt>source.ref</tt> in
-<xref target="evidence-predicate"/>. A verifier <bcp14>MUST</bcp14> reject a
-<tt>previousReceiptHash</tt> whose prefix names an algorithm it does not
-implement, rather than assuming SHA-256 from the length. A bare hex digest
-with no prefix is the encoding used by earlier revisions; verifiers
-<bcp14>MAY</bcp14> accept it for compatibility but <bcp14>MUST NOT</bcp14>
-emit it.</t>
+<xref target="evidence-predicate"/>. Earlier revisions encoded the same
+digest as bare hex with no prefix.</t>
+        <t>A verifier <bcp14>MUST</bcp14> recognize a link in either of two
+forms: <tt>"sha256:"</tt> followed by exactly 64 lowercase hexadecimal
+characters, or, for compatibility with those revisions only, the same 64
+characters with no prefix, which an issuer <bcp14>MUST NOT</bcp14> emit. Any
+other value of the member, apart from <tt>null</tt>
+(<xref target="chain-link-verification"/>), is not a link to any receipt,
+and is one of two things:</t>
+        <ul>
+          <li><t>A value that begins with a name and a colon is read as naming
+another hash algorithm when the name starts with an ASCII letter or digit,
+contains only ASCII letters, digits, <tt>"."</tt>, <tt>"_"</tt>,
+<tt>"+"</tt> and <tt>"-"</tt>, and is not <tt>"sha256"</tt> when compared
+without regard to case. This document defines links under SHA-256 alone, so a
+verifier <bcp14>MUST NOT</bcp14> accept such a value as a link, whether or not
+it implements the algorithm, and <bcp14>MUST NOT</bcp14> assume SHA-256 from
+the length of what follows. The outcome is undecidable, as defined in
+<xref target="verification-outcomes"/>, and names the algorithm as its
+cause.</t></li>
+          <li><t>Any other value is malformed: a digest in uppercase hexadecimal
+or of the wrong length, another encoding such as base64url, the empty
+string, or a value that is not a string. A verifier <bcp14>MUST</bcp14>
+reject a receipt whose link is malformed, whether or not it holds the
+predecessor: the receipt is invalid, as defined in
+<xref target="verification-outcomes"/>.</t></li>
+        </ul>
+
+        <section anchor="chain-link-verification">
+          <name>Verifying Chain Links</name>
+          <t>When a caller supplies a receipt's predecessor, asserting that the
+receipt follows it, the verifier computes the link of the predecessor as
+defined in <xref target="chain-hash-scope"/> and compares it with the
+receipt's <tt>previousReceiptHash</tt>. The receipt follows the predecessor
+only if that member is the computed link, in either form. If the member is
+absent, <tt>null</tt>, or any other value, the verifier <bcp14>MUST</bcp14>
+report that the receipt does not follow the supplied predecessor. That is a
+failed chain check, and the receipt is invalid, as defined in
+<xref target="verification-outcomes"/>, with one exception: a value naming
+another hash algorithm is undecidable, as <xref target="chain-hash-scope"/>
+states. Absence never satisfies a supplied predecessor. A receipt that omits
+the member is a genesis or an unchained receipt
+(<xref target="payload"/>), and neither follows the receipt supplied.</t>
+          <t>When a caller gives a verifier a sequence of receipts without
+asserting that each follows the one before it, as with a log that holds one
+chain per session, a receipt that omits <tt>previousReceiptHash</tt> begins
+a new chain: it is a genesis or an unchained receipt, as
+<xref target="payload"/> says. The verifier <bcp14>MUST NOT</bcp14> report
+it as linked to the receipt before it, and <bcp14>SHOULD</bcp14> report where
+each chain in the sequence begins. A receipt that carries a link is checked
+against the receipt before it, as for a supplied predecessor, except the
+first receipt of the sequence, which has nothing before it: a link it carries
+is reported, not failed. That receipt begins the sequence's first chain, and
+the verifier <bcp14>SHOULD</bcp14> say that its predecessor was not supplied.
+A log that interleaves the chains of concurrent sessions has to be split into
+its chains before it is read this way, and this document does not define
+how.</t>
+          <t>In both cases, a verifier <bcp14>MUST NOT</bcp14> accept a link
+computed over the predecessor's <tt>payload</tt> member alone, in either
+form, as the link of that predecessor. No revision of this document defines
+one, and it would let a re-signed receipt keep the original's link.</t>
+          <t>A <tt>previousReceiptHash</tt> of <tt>null</tt> is never a link to
+any receipt, and an issuer <bcp14>MUST NOT</bcp14> emit one;
+<xref target="payload"/> has the first receipt in a chain omit the member
+instead. Against a supplied predecessor, a <tt>null</tt> link fails as above.
+In a sequence, or on a receipt checked alone, a verifier reads <tt>null</tt>
+as an omitted member, so the receipt begins a chain, and
+<bcp14>SHOULD</bcp14> warn that its issuer emitted a value it must not.</t>
+        </section>
       </section>
 
       <section anchor="policy-digest-construction">
@@ -1237,7 +1371,9 @@ Python gateway hook, pass the suite. The suite exercises:</t>
 each with its own signing-input rule.</t></li>
           <li><t>The chain hash rule of <xref target="chain-hash-scope"/>:
 each receipt's link is computed over the previous receipt as
-transmitted, signature included.</t></li>
+transmitted, signature included. Checked alone, a receipt whose link is
+malformed, either not a digest or in uppercase hexadecimal, is invalid,
+and one whose link names SHA3-256 or SHA-512 is undecidable.</t></li>
           <li><t>The policy digest rule of <xref target="policy-digest-construction"/>:
 the digest is recomputed from the policy bytes as loaded and compared
 with the digest the receipt carries, and a receipt whose digest was not
@@ -1253,6 +1389,12 @@ suite.</t></li>
           <li><t>The evidence predicate of <xref target="evidence-predicate"/>:
 decision receipts whose evidence entries verify under the named source,
 and structurally malformed entries that do not.</t></li>
+          <li><t>The key validity windows of
+<xref target="key-validity-windows"/>: with a key set that bounds the key, a
+receipt issued inside the window is valid, and receipts issued before
+<tt>valid_from</tt>, exactly at <tt>valid_until</tt>, and after it are
+invalid; with a key set that carries no window, the outcome is valid and
+reports the key's validity at issuance as not established.</t></li>
         </ul>
         <t>For the commitment mode of this section the minimum set is:</t>
         <ul>
@@ -1364,7 +1506,10 @@ MAY add a <tt>nonce</tt> field to the payload.</t>
 that key become suspect. Issuers SHOULD implement key rotation by
 publishing new keys at the well-known endpoint and including a
 <tt>valid_from</tt> / <tt>valid_until</tt> window in the JWK metadata.</t>
-        <t>Verifiers SHOULD check key validity windows when available.</t>
+        <t>Verifiers apply key validity windows as defined in
+<xref target="key-validity-windows"/>. A window detects a key still in use
+after an honest rotation, not a compromised key used to sign receipts dated
+inside the window.</t>
       </section>
       <section anchor="payload-privacy">
         <name>Payload Privacy</name>
@@ -1691,6 +1836,17 @@ before parsing it.</t>
       </references>
       <references anchor="sec-informative-references">
         <name>Informative References</name>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author fullname="M. Jones" initials="M." surname="Jones"/>
+            <author fullname="J. Bradley" initials="J." surname="Bradley"/>
+            <author fullname="N. Sakimura" initials="N." surname="Sakimura"/>
+            <date month="May" year="2015"/>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
         <reference anchor="RFC9497" target="https://www.rfc-editor.org/info/rfc9497">
           <front>
             <title>Oblivious Pseudorandom Functions (OPRFs) Using Prime-Order Groups</title>
@@ -2067,7 +2223,39 @@ $ npx @veritasacta/verify receipt.json --key issuer-public.json
 invalid, and undecidable; a verifier distinguishes all three in every
 consumable output, an undecidable outcome names its cause, and a gate
 treats it as a failure to verify rather than as tampering or as a pass.
-Step 6 of the verification process refers to it.</t></li>
+When several checks run, the verification is invalid if any failed, and
+undecidable only if none failed and one could not run. Step 7 of the
+verification process refers to it.</t></li>
+        <li><t>Section 5.5 (new): key validity windows. When the key source
+gives a key a <tt>valid_from</tt> / <tt>valid_until</tt> window, applying it
+to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
+<tt>valid_from</tt> and excludes <tt>valid_until</tt>, as RFC 7519 treats
+<tt>exp</tt>. A receipt outside it is invalid, a window that cannot be
+applied is undecidable, and with no window a verifier reports the key's
+validity at issuance as not established rather than as valid. The
+verification process gains a step for it, Section 5.3 lists the new invalid
+and undecidable causes, and Section 6.11 lists the corresponding
+vectors.</t></li>
+        <li><t>Section 6.7, and Section 6.7.1 (new): how a verifier treats
+chain links. A verifier must recognize both forms of link:
+<tt>"sha256:"</tt> and 64 lowercase hexadecimal characters, and the bare 64
+characters of earlier revisions (-03 said MAY for the bare form). A value
+whose prefix names another hash algorithm is undecidable, not rejected,
+whether or not the verifier implements that algorithm; -03 said to reject a
+prefix naming an algorithm the verifier does not implement, which left the
+outcome to the verifier. Any other value is malformed, uppercase hexadecimal
+included, and the receipt is invalid whether or not its predecessor is at
+hand. A link over the predecessor's payload alone never matches. Given a
+predecessor by its caller, a receipt follows it only if it carries that
+receipt's link, so an absent or <tt>null</tt> link fails, a case -03 left
+open. Reading a sequence, a receipt without a link begins a new chain and is
+never reported as linked to the one before it, and a <tt>null</tt> link is
+read the same way, with a warning. A link on the first receipt of a sequence
+is reported, not failed, since its predecessor was not supplied, and a log
+that interleaves chains has to be split into them first, which this document
+does not define. Section 2.2 points at the new subsection,
+Section 5.3 lists the new invalid and undecidable causes, and Section 6.11
+lists the corresponding vectors.</t></li>
         <li><t>Section 6.11: the interoperability suite is named, what it
 checks is listed (both shapes, the chain hash rule, the policy digest
 rule, the three outcomes for a key carried inside the signed bytes, the
@@ -2301,6 +2489,12 @@ who contributed the closed value sets and the structured <tt>source</tt>
 object. The requirement that the attesting key be independent of the receipt
 signer, and the false-assurance analysis that follows from it, were developed
 jointly.</t>
+      <t>Thanks to giskard09 (argentum-core), Roberto Locatelli, and
+astrogilda for showing, with published vectors and a second implementation,
+that under the -03 wording a verifier could apply a key's validity window or
+skip it and still conform, which made the outcome for a receipt signed with a
+rotated key a property of the verifier rather than of the receipt. The rule in
+<xref target="key-validity-windows"/> follows from that measurement.</t>
       <t>Thanks to Michael Msebenzi for a detailed errata review of the
 -02 revision, conducted by building an independent verifier and
 recomputing against pinned bytes. That review identified the signing-scope
