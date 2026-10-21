@@ -69,6 +69,9 @@ can verify a receipt without network access or API calls.</t>
 payloads, prompts, or sensitive parameters.</t>
         </li>
       </ol>
+      <t>Further receipt types are listed in <tt>receipt-types.md</tt>, an
+informative registry kept with this document at
+<eref target="https://github.com/VeritasActa/drafts/blob/main/receipt-types.md"/>.</t>
       <section anchor="relationship-to-mcp">
         <name>Relationship to MCP</name>
         <t>The Model Context Protocol <xref target="MCP"/> defines a JSON-RPC transport for
@@ -164,7 +167,7 @@ that may appear in any payload type is listed here.</t>
           <dt>type (REQUIRED):</dt>
           <dd>
             <t>A namespaced string identifying the receipt type.
-Examples: <tt>"protectmcp:decision"</tt>, <tt>"protectmcp:restraint"</tt>,
+Examples: <tt>"protectmcp:decision"</tt>,
 <tt>"blindllm:arena-battle"</tt>.</t>
           </dd>
           <dt>issued_at (REQUIRED):</dt>
@@ -284,8 +287,9 @@ not vouch for its semantic accuracy.</t>
     </section>
     <section anchor="receipt-types">
       <name>Receipt Types</name>
-      <t>This specification defines six receipt types. Implementations MAY
-define additional types using the namespaced <tt>type</tt> field.</t>
+      <t>This specification defines one receipt type, the Access Decision
+Receipt. Implementations MAY define additional types using the namespaced
+<tt>type</tt> field.</t>
       <section anchor="access-decision-receipt">
         <name>Access Decision Receipt</name>
         <t>Type: <tt>protectmcp:decision</tt></t>
@@ -324,13 +328,25 @@ executes, is recorded in a subsequent receipt.</t>
             <dd>
               <t>A machine-readable reason code for the decision.
 Examples: <tt>"tier_insufficient"</tt>, <tt>"rate_exceeded"</tt>,
-<tt>"policy_block"</tt>, <tt>"agent_refusal"</tt>.</t>
+<tt>"policy_block"</tt>, <tt>"agent_refusal"</tt>. When the decision is
+<tt>"deny"</tt>, <tt>"policy_block"</tt> records that the denial was imposed
+by external policy, and <tt>"agent_refusal"</tt> that the agent imposed it on
+itself.</t>
+            </dd>
+            <dt>agent_id (OPTIONAL):</dt>
+            <dd>
+              <t>The identifier of the agent whose tool call was evaluated.</t>
+            </dd>
+            <dt>agent_manifest_version (OPTIONAL):</dt>
+            <dd>
+              <t>The semantic version of the agent's manifest at the time of
+the decision.</t>
             </dd>
             <dt>agent_tier (OPTIONAL):</dt>
             <dd>
               <t>The trust tier of the requesting agent at the time of the
 decision. One of: <tt>"unknown"</tt>, <tt>"signed-known"</tt>,
-<tt>"evidenced"</tt>, <tt>"privileged"</tt>.</t>
+<tt>"privileged"</tt>.</t>
             </dd>
             <dt>required_tier (OPTIONAL):</dt>
             <dd>
@@ -352,233 +368,6 @@ explicitly configures session binding.</t>
             </dd>
           </dl>
         </section>
-      </section>
-      <section anchor="restraint-receipt">
-        <name>Restraint Receipt</name>
-        <t>Type: <tt>protectmcp:restraint</tt></t>
-        <t>Records an agent's interaction with a policy boundary, specifically
-whether the agent attempted to use a restricted tool and whether the
-restriction was enforced by an external policy or self-imposed.</t>
-        <artwork><![CDATA[
-{
-  "type": "protectmcp:restraint",
-  "agent_id": "sb:agent:8xKm3Qw2Yb1c",
-  "agent_manifest_version": "1.2.0",
-  "tool_name": "rm_rf",
-  "decision": "deny",
-  "denial_type": "policy-block",
-  "issued_at": "2026-03-22T14:35:12.441Z",
-  "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-}
-]]></artwork>
-        <section anchor="fields-1">
-          <name>Fields</name>
-          <dl>
-            <dt>agent_id (REQUIRED):</dt>
-            <dd>
-              <t>The identifier of the agent whose tool call was evaluated.</t>
-            </dd>
-            <dt>agent_manifest_version (REQUIRED):</dt>
-            <dd>
-              <t>The semantic version of the agent's manifest at the time of
-the decision.</t>
-            </dd>
-            <dt>tool_name (REQUIRED):</dt>
-            <dd>
-              <t>The tool that was called or attempted.</t>
-            </dd>
-            <dt>decision (REQUIRED):</dt>
-            <dd>
-              <t>One of: <tt>"allow"</tt>, <tt>"deny"</tt>.</t>
-            </dd>
-            <dt>denial_type (OPTIONAL):</dt>
-            <dd>
-              <t>If the decision is <tt>"deny"</tt>, indicates whether the denial was
-imposed by external policy (<tt>"policy-block"</tt>) or self-imposed
-by the agent (<tt>"agent-refusal"</tt>).</t>
-            </dd>
-          </dl>
-        </section>
-      </section>
-      <section anchor="arena-battle-receipt">
-        <name>Arena Battle Receipt</name>
-        <t>Type: <tt>blindllm:arena-battle</tt></t>
-        <t>Records the outcome of a competitive evaluation between two AI agents,
-as conducted by a neutral arena platform.</t>
-        <artwork><![CDATA[
-{
-  "type": "blindllm:arena-battle",
-  "battle_id": "bat_9x8f7a2b",
-  "lane_id": "lane_creative_writing",
-  "agent_a": {
-    "id": "sb:agent:3mK9pQ7wXx2b",
-    "manifest_version": "2.1.0"
-  },
-  "agent_b": {
-    "id": "sb:agent:8xKm3Qw2Yb1c",
-    "manifest_version": "1.4.0"
-  },
-  "winner": "A",
-  "issued_at": "2026-03-22T15:00:00.000Z",
-  "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-}
-]]></artwork>
-        <section anchor="fields-2">
-          <name>Fields</name>
-          <dl>
-            <dt>battle_id (REQUIRED):</dt>
-            <dd>
-              <t>Unique identifier for the battle instance.</t>
-            </dd>
-            <dt>lane_id (REQUIRED):</dt>
-            <dd>
-              <t>The evaluation category or "lane" in which the battle occurred.</t>
-            </dd>
-            <dt>agent_a, agent_b (REQUIRED):</dt>
-            <dd>
-              <t>Objects identifying each participant, containing:
-- <tt>id</tt>: The agent's passport identifier.
-- <tt>manifest_version</tt>: The agent's manifest version at battle time.</t>
-            </dd>
-            <dt>winner (REQUIRED):</dt>
-            <dd>
-              <t>One of: <tt>"A"</tt>, <tt>"B"</tt>, <tt>"tie"</tt>.</t>
-            </dd>
-          </dl>
-        </section>
-      </section>
-      <section anchor="agent-lifecycle-receipt">
-        <name>Agent Lifecycle Receipt</name>
-        <t>Type: <tt>protectmcp:lifecycle</tt></t>
-        <t>Records agent lifecycle events in multi-agent orchestration systems
-(swarms, coordinator mode, scheduled agents). Enables reconstruction
-of the full agent topology from the receipt DAG.</t>
-        <artwork><![CDATA[
-{
-  "type": "protectmcp:lifecycle",
-  "lifecycle_event": "subagent_start",
-  "agent_id": "worker-a1b",
-  "agent_type": "general-purpose",
-  "parent_session_id": "ses_7f8a2b",
-  "team_name": "backend-ops",
-  "sandbox_state": "enabled",
-  "issued_at": "2026-04-01T10:15:00.000Z",
-  "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-}
-]]></artwork>
-        <section anchor="fields-3">
-          <name>Fields</name>
-          <dl>
-            <dt>lifecycle_event (REQUIRED):</dt>
-            <dd>
-              <t>One of: <tt>"subagent_start"</tt>, <tt>"subagent_stop"</tt>,
-<tt>"session_start"</tt>, <tt>"session_end"</tt>, <tt>"task_created"</tt>,
-<tt>"task_completed"</tt>, <tt>"teammate_idle"</tt>, <tt>"config_change"</tt>.</t>
-            </dd>
-            <dt>agent_id (OPTIONAL):</dt>
-            <dd>
-              <t>The identifier of the agent involved in the lifecycle event.</t>
-            </dd>
-            <dt>agent_type (OPTIONAL):</dt>
-            <dd>
-              <t>The type of agent (e.g., <tt>"coordinator"</tt>, <tt>"worker"</tt>,
-<tt>"standalone"</tt>, <tt>"general-purpose"</tt>).</t>
-            </dd>
-            <dt>parent_session_id (OPTIONAL):</dt>
-            <dd>
-              <t>The session identifier of the parent/coordinator agent.
-Creates a verifiable parent-child relationship in the DAG.</t>
-            </dd>
-            <dt>team_name (OPTIONAL):</dt>
-            <dd>
-              <t>The team or swarm name, if operating in multi-agent mode.</t>
-            </dd>
-          </dl>
-        </section>
-      </section>
-      <section anchor="spending-authority-receipt">
-        <name>Spending Authority Receipt</name>
-        <t>Type: <tt>scopeblind:spending_authority</tt></t>
-        <t>Records the outcome of an issuer-blind spending authorization check.
-Proves that an agent's purchase is within authorized limits without
-revealing organizational identity, budget ceiling, or delegation chain.</t>
-        <artwork><![CDATA[
-{
-  "type": "scopeblind:spending_authority",
-  "amount": 99.50,
-  "currency": "USD",
-  "category": "cloud_compute",
-  "utilization_band": "low",
-  "decision": "allow",
-  "policy_digest": "sha256:a8f3...c91e",
-  "issued_at": "2026-04-01T12:00:00.000Z",
-  "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-}
-]]></artwork>
-        <section anchor="fields-4">
-          <name>Fields</name>
-          <dl>
-            <dt>amount (REQUIRED):</dt>
-            <dd>
-              <t>The monetary amount of the transaction.</t>
-            </dd>
-            <dt>currency (REQUIRED):</dt>
-            <dd>
-              <t>ISO 4217 currency code (e.g., <tt>"USD"</tt>).</t>
-            </dd>
-            <dt>category (OPTIONAL):</dt>
-            <dd>
-              <t>A classification of the spending type (e.g.,
-<tt>"cloud_compute"</tt>, <tt>"saas_subscription"</tt>, <tt>"api_usage"</tt>).</t>
-            </dd>
-            <dt>utilization_band (OPTIONAL):</dt>
-            <dd>
-              <t>A coarse indicator of budget utilization. One of: <tt>"low"</tt>
-(&lt;25%), <tt>"medium"</tt> (25-75%), <tt>"high"</tt> (75-100%),
-<tt>"exceeded"</tt>. The exact budget ceiling is NOT disclosed, only the
-band. This prevents price discrimination while proving budget
-compliance.</t>
-            </dd>
-            <dt>decision (REQUIRED):</dt>
-            <dd>
-              <t>One of: <tt>"allow"</tt>, <tt>"deny"</tt>.</t>
-            </dd>
-          </dl>
-          <t>The receipt deliberately EXCLUDES: organization name, total budget
-ceiling, exact remaining budget, agent identity, and delegation
-chain. Verification uses VOPRF (<xref target="RFC9497"/>) to confirm receipt
-validity without the verifier learning which organization issued it.</t>
-        </section>
-      </section>
-      <section anchor="formal-debate-receipt">
-        <name>Formal Debate Receipt</name>
-        <t>Type: <tt>blindllm:formal-debate</tt></t>
-        <t>Records the outcome of a structured debate with audience and judge
-scoring. Extends the arena battle format with additional governance
-fields.</t>
-        <artwork><![CDATA[
-{
-  "type": "blindllm:formal-debate",
-  "debate_id": "dbt_4f2a8c",
-  "spec_id": "spec_ai_safety_v2",
-  "lane_id": "lane_policy",
-  "artifact_hash": "sha256:b3c4d5e6...",
-  "resolution_hash": "sha256:f7a8b9c0...",
-  "pro": {
-    "id": "sb:agent:3mK9pQ7wXx2b",
-    "manifest_version": "2.1.0"
-  },
-  "con": {
-    "id": "sb:agent:8xKm3Qw2Yb1c",
-    "manifest_version": "1.4.0"
-  },
-  "audience_winner": "pro",
-  "judge_winner": "pro",
-  "restraint_result": "clean",
-  "issued_at": "2026-03-22T16:30:00.000Z",
-  "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-}
-]]></artwork>
       </section>
     </section>
     <section anchor="evidence-predicate">
@@ -1340,21 +1129,6 @@ signature, which the algorithm agility above allows to be upgraded in
 place.</t>
       </section>
 
-      <section anchor="zk-context-binding">
-        <name>Context Binding for ZK Proofs</name>
-        <t>When a receipt's <tt>principal</tt> (or any committed
-field) references a zero-knowledge proof produced under a separate ZK
-protocol (e.g., <xref target="I-D.google-cfrg-libzk"/>), the ZK proof
-MUST bind to the receipt's <tt>committed_fields_root</tt> as a public
-input or context hash. Without this binding, a valid ZK proof is
-replayable into a different receipt with a different
-<tt>committed_fields_root</tt>.</t>
-        <t>The committed-fields root serves double duty: it commits to
-the selectively-disclosable receipt content, and it provides a
-deterministic, signature-independent context hash that any external
-proof system can bind against.</t>
-      </section>
-
       <section anchor="commitment-test-vectors">
         <name>Test Vectors</name>
         <t>An interoperability test suite is published alongside this draft
@@ -1418,67 +1192,6 @@ guidance in <xref target="commitment-salt"/>.</t>
       </section>
     </section>
 
-    <section anchor="trust-tiers">
-      <name>Trust Tiers</name>
-      <t>This specification defines a four-level trust hierarchy for agent
-identity. Trust tiers are used by policy engines to gate tool access.</t>
-      <dl>
-        <dt>unknown:</dt>
-        <dd>
-          <t>No identity presented. Default tier for anonymous connections.</t>
-        </dd>
-        <dt>signed-known:</dt>
-        <dd>
-          <t>Agent presents a valid signed manifest with a verifiable
-Ed25519 public key. Identity is pseudonymous but consistent.</t>
-        </dd>
-        <dt>evidenced:</dt>
-        <dd>
-          <t>Agent has accumulated verifiable evidence receipts (e.g., arena
-battle outcomes, successful restraint records) that demonstrate
-a track record of trustworthy behavior.</t>
-        </dd>
-        <dt>privileged:</dt>
-        <dd>
-          <t>Operator has explicitly granted elevated access. Typically
-requires out-of-band verification (e.g., organization membership,
-contractual agreement).</t>
-        </dd>
-      </dl>
-      <t>Trust tier transitions are unidirectional within a session but MAY
-be re-evaluated across sessions based on accumulated evidence.</t>
-    </section>
-    <section anchor="agent-identity">
-      <name>Agent Identity</name>
-      <section anchor="passport-manifest">
-        <name>Passport Manifest</name>
-        <t>An agent's identity is expressed as a signed manifest:</t>
-        <artwork><![CDATA[
-{
-  "type": "scopeblind:agent-manifest",
-  "id": "sb:agent:3mK9pQ7wXx2b",
-  "version": "2.1.0",
-  "previous_version": "2.0.0",
-  "created_at": "2026-03-20T10:00:00Z",
-  "public_key": "<base58-ed25519-public-key>"
-}
-]]></artwork>
-        <t>Manifests are IMMUTABLE once signed. Version changes create new
-manifests that reference their predecessor via <tt>previous_version</tt>,
-forming a verifiable version chain.</t>
-      </section>
-      <section anchor="dpop-binding-future">
-        <name>DPoP Binding (Future)</name>
-        <t>For remote MCP transports (HTTP/SSE), agent identity MAY be bound
-to per-request proof-of-possession using DPoP <xref target="RFC9449"/>. The
-<tt>auth_key_bindings</tt> field in the manifest links the agent's Ed25519
-identity key to one or more P-256 DPoP keys.</t>
-        <t>This binding creates a verifiable delegation chain:</t>
-        <artwork><![CDATA[
-Operator -> Agent Identity (Ed25519) -> Request Auth (P-256 DPoP)
-]]></artwork>
-      </section>
-    </section>
     <section anchor="security-considerations">
       <name>Security Considerations</name>
       <section anchor="replay-protection">
@@ -1792,23 +1505,6 @@ before parsing it.</t>
           </front>
           <seriesInfo name="RFC" value="7517"/>
           <seriesInfo name="DOI" value="10.17487/RFC7517"/>
-        </reference>
-        <reference anchor="RFC9449" target="https://www.rfc-editor.org/info/rfc9449" xml:base="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9449.xml">
-          <front>
-            <title>OAuth 2.0 Demonstrating Proof of Possession (DPoP)</title>
-            <author fullname="D. Fett" initials="D." surname="Fett"/>
-            <author fullname="B. Campbell" initials="B." surname="Campbell"/>
-            <author fullname="J. Bradley" initials="J." surname="Bradley"/>
-            <author fullname="T. Lodderstedt" initials="T." surname="Lodderstedt"/>
-            <author fullname="M. Jones" initials="M." surname="Jones"/>
-            <author fullname="D. Waite" initials="D." surname="Waite"/>
-            <date month="September" year="2023"/>
-            <abstract>
-              <t>This document describes a mechanism for sender-constraining OAuth 2.0 tokens via a proof-of-possession mechanism on the application level. This mechanism allows for the detection of replay attacks with access and refresh tokens.</t>
-            </abstract>
-          </front>
-          <seriesInfo name="RFC" value="9449"/>
-          <seriesInfo name="DOI" value="10.17487/RFC9449"/>
         </reference>
         <reference anchor="RFC6962" target="https://www.rfc-editor.org/info/rfc6962">
           <front>
@@ -2284,7 +1980,7 @@ to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
 applied is undecidable, and with no window a verifier reports the key's
 validity at issuance as not established rather than as valid. The
 verification process gains a step for it, Section 5.3 lists the new invalid
-and undecidable causes, and Section 6.11 lists the corresponding
+and undecidable causes, and Section 6.10 lists the corresponding
 vectors.</t></li>
         <li><t>Section 6.7, and Section 6.7.1 (new): how a verifier treats
 chain links. A verifier must recognize both forms of link:
@@ -2304,9 +2000,9 @@ read the same way, with a warning. A link on the first receipt of a sequence
 is reported, not failed, since its predecessor was not supplied, and a log
 that interleaves chains has to be split into them first, which this document
 does not define. Section 2.2 points at the new subsection,
-Section 5.3 lists the new invalid and undecidable causes, and Section 6.11
+Section 5.3 lists the new invalid and undecidable causes, and Section 6.10
 lists the corresponding vectors.</t></li>
-        <li><t>Section 6.11: the interoperability suite is named, what it
+        <li><t>Section 6.10: the interoperability suite is named, what it
 checks is listed (both shapes, the chain hash rule, the policy digest
 rule, the three outcomes for a key carried inside the signed bytes, the
 evidence predicate), and three independent implementations are recorded

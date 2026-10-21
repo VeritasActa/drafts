@@ -66,46 +66,46 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 Table of Contents
 
-   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   4
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
      1.1.  Relationship to MCP . . . . . . . . . . . . . . . . . . .   4
-     1.2.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   5
-   2.  Receipt Structure . . . . . . . . . . . . . . . . . . . . . .   5
-     2.1.  Signed Envelope . . . . . . . . . . . . . . . . . . . . .   5
+     1.2.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   4
+   2.  Receipt Structure . . . . . . . . . . . . . . . . . . . . . .   4
+     2.1.  Signed Envelope . . . . . . . . . . . . . . . . . . . . .   4
        2.1.1.  Signature Object  . . . . . . . . . . . . . . . . . .   5
      2.2.  Payload . . . . . . . . . . . . . . . . . . . . . . . . .   6
    3.  Receipt Types . . . . . . . . . . . . . . . . . . . . . . . .   8
      3.1.  Access Decision Receipt . . . . . . . . . . . . . . . . .   8
        3.1.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . .   8
-     3.2.  Restraint Receipt . . . . . . . . . . . . . . . . . . . .   9
-       3.2.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . .   9
-     3.3.  Arena Battle Receipt  . . . . . . . . . . . . . . . . . .  10
-       3.3.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . .  10
-     3.4.  Agent Lifecycle Receipt . . . . . . . . . . . . . . . . .  11
-       3.4.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . .  11
-     3.5.  Spending Authority Receipt  . . . . . . . . . . . . . . .  11
-       3.5.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . .  12
-     3.6.  Formal Debate Receipt . . . . . . . . . . . . . . . . . .  12
-   4.  Evidence Predicate  . . . . . . . . . . . . . . . . . . . . .  13
-     4.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . . . .  14
-     4.2.  Properties  . . . . . . . . . . . . . . . . . . . . . . .  14
-     4.3.  Trust Model . . . . . . . . . . . . . . . . . . . . . . .  15
-   5.  Signing and Verification  . . . . . . . . . . . . . . . . . .  16
-     5.1.  Signing Process . . . . . . . . . . . . . . . . . . . . .  16
-     5.2.  Verification Process  . . . . . . . . . . . . . . . . . .  17
-     5.3.  Verification Outcomes . . . . . . . . . . . . . . . . . .  17
-     5.4.  Public Key Distribution . . . . . . . . . . . . . . . . .  19
-     5.5.  Key Validity Windows  . . . . . . . . . . . . . . . . . .  19
-   6.  Commitment Mode (Optional Extension)  . . . . . . . . . . . .  20
-     6.1.  Merkle Tree Construction  . . . . . . . . . . . . . . . .  21
-     6.2.  Canonical Leaf Layout . . . . . . . . . . . . . . . . . .  21
-     6.3.  Leaf Sort Order . . . . . . . . . . . . . . . . . . . . .  22
-     6.4.  Salt Construction and Storage . . . . . . . . . . . . . .  22
-     6.5.  Selective Disclosure  . . . . . . . . . . . . . . . . . .  23
-     6.6.  Signature Scope (Normative Clarification) . . . . . . . .  23
-     6.7.  Chain Hash Scope (Normative Clarification)  . . . . . . .  24
-       6.7.1.  Verifying Chain Links . . . . . . . . . . . . . . . .  25
-     6.8.  Policy Digest Construction (Normative)  . . . . . . . . .  26
-       6.8.1.  Policy Publication  . . . . . . . . . . . . . . . . .  27
+   4.  Evidence Predicate  . . . . . . . . . . . . . . . . . . . . .   9
+     4.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . . . .  10
+     4.2.  Properties  . . . . . . . . . . . . . . . . . . . . . . .  11
+     4.3.  Trust Model . . . . . . . . . . . . . . . . . . . . . . .  11
+   5.  Signing and Verification  . . . . . . . . . . . . . . . . . .  12
+     5.1.  Signing Process . . . . . . . . . . . . . . . . . . . . .  12
+     5.2.  Verification Process  . . . . . . . . . . . . . . . . . .  13
+     5.3.  Verification Outcomes . . . . . . . . . . . . . . . . . .  14
+     5.4.  Public Key Distribution . . . . . . . . . . . . . . . . .  15
+     5.5.  Key Validity Windows  . . . . . . . . . . . . . . . . . .  15
+   6.  Commitment Mode (Optional Extension)  . . . . . . . . . . . .  17
+     6.1.  Merkle Tree Construction  . . . . . . . . . . . . . . . .  17
+     6.2.  Canonical Leaf Layout . . . . . . . . . . . . . . . . . .  18
+     6.3.  Leaf Sort Order . . . . . . . . . . . . . . . . . . . . .  18
+     6.4.  Salt Construction and Storage . . . . . . . . . . . . . .  18
+     6.5.  Selective Disclosure  . . . . . . . . . . . . . . . . . .  19
+     6.6.  Signature Scope (Normative Clarification) . . . . . . . .  19
+     6.7.  Chain Hash Scope (Normative Clarification)  . . . . . . .  20
+       6.7.1.  Verifying Chain Links . . . . . . . . . . . . . . . .  21
+     6.8.  Policy Digest Construction (Normative)  . . . . . . . . .  22
+       6.8.1.  Policy Publication  . . . . . . . . . . . . . . . . .  24
+     6.9.  Signature Algorithm Agility . . . . . . . . . . . . . . .  24
+     6.10. Test Vectors  . . . . . . . . . . . . . . . . . . . . . .  25
+   7.  Security Considerations . . . . . . . . . . . . . . . . . . .  26
+     7.1.  Replay Protection . . . . . . . . . . . . . . . . . . . .  26
+     7.2.  Key Compromise  . . . . . . . . . . . . . . . . . . . . .  27
+     7.3.  Payload Privacy . . . . . . . . . . . . . . . . . . . . .  27
+     7.4.  Canonicalization Attacks  . . . . . . . . . . . . . . . .  27
+     7.5.  Key Distribution and Trust Anchors  . . . . . . . . . . .  27
+     7.6.  Verifier Identity Is Not Receipt Content  . . . . . . . .  29
 
 
 
@@ -114,61 +114,35 @@ Farley                    Expires 22 April 2027                 [Page 2]
 Internet-Draft            Acta Signed Receipts              October 2026
 
 
-     6.9.  Signature Algorithm Agility . . . . . . . . . . . . . . .  28
-     6.10. Context Binding for ZK Proofs . . . . . . . . . . . . . .  29
-     6.11. Test Vectors  . . . . . . . . . . . . . . . . . . . . . .  29
-   7.  Trust Tiers . . . . . . . . . . . . . . . . . . . . . . . . .  30
-   8.  Agent Identity  . . . . . . . . . . . . . . . . . . . . . . .  31
-     8.1.  Passport Manifest . . . . . . . . . . . . . . . . . . . .  31
-     8.2.  DPoP Binding (Future) . . . . . . . . . . . . . . . . . .  31
-   9.  Security Considerations . . . . . . . . . . . . . . . . . . .  32
-     9.1.  Replay Protection . . . . . . . . . . . . . . . . . . . .  32
-     9.2.  Key Compromise  . . . . . . . . . . . . . . . . . . . . .  32
-     9.3.  Payload Privacy . . . . . . . . . . . . . . . . . . . . .  32
-     9.4.  Canonicalization Attacks  . . . . . . . . . . . . . . . .  33
-     9.5.  Key Distribution and Trust Anchors  . . . . . . . . . . .  33
-     9.6.  Verifier Identity Is Not Receipt Content  . . . . . . . .  34
-     9.7.  Chain Completeness and Truncation . . . . . . . . . . . .  34
-     9.8.  Decisions Are Not Executions  . . . . . . . . . . . . . .  35
-     9.9.  Evidence Predicate: False Assurance . . . . . . . . . . .  36
-   10. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  36
-   11. References  . . . . . . . . . . . . . . . . . . . . . . . . .  36
-     11.1.  Normative References . . . . . . . . . . . . . . . . . .  36
-     11.2.  Informative References . . . . . . . . . . . . . . . . .  38
-   Appendix A.  Implementation Status  . . . . . . . . . . . . . . .  38
-     A.1.  protect-mcp (Reference Implementation)  . . . . . . . . .  39
-     A.2.  @veritasacta/verify (Verifier)  . . . . . . . . . . . . .  39
-     A.3.  @scopeblind/passport (Identity SDK) . . . . . . . . . . .  39
-     A.4.  protect-mcp-adk (Google ADK)  . . . . . . . . . . . . . .  39
-     A.5.  scopeblind-pydantic-ai (Pydantic AI)  . . . . . . . . . .  40
-     A.6.  scopeblind-llamaindex (LlamaIndex)  . . . . . . . . . . .  40
-     A.7.  @scopeblind/vercel-ai (Vercel AI SDK) . . . . . . . . . .  40
-     A.8.  @scopeblind/langchain (LangChain + LangGraph) . . . . . .  41
+     7.7.  Chain Completeness and Truncation . . . . . . . . . . . .  29
+     7.8.  Decisions Are Not Executions  . . . . . . . . . . . . . .  30
+     7.9.  Evidence Predicate: False Assurance . . . . . . . . . . .  31
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  31
+   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  31
+     9.1.  Normative References  . . . . . . . . . . . . . . . . . .  31
+     9.2.  Informative References  . . . . . . . . . . . . . . . . .  32
+   Appendix A.  Implementation Status  . . . . . . . . . . . . . . .  33
+     A.1.  protect-mcp (Reference Implementation)  . . . . . . . . .  33
+     A.2.  @veritasacta/verify (Verifier)  . . . . . . . . . . . . .  34
+     A.3.  @scopeblind/passport (Identity SDK) . . . . . . . . . . .  34
+     A.4.  protect-mcp-adk (Google ADK)  . . . . . . . . . . . . . .  34
+     A.5.  scopeblind-pydantic-ai (Pydantic AI)  . . . . . . . . . .  35
+     A.6.  scopeblind-llamaindex (LlamaIndex)  . . . . . . . . . . .  35
+     A.7.  @scopeblind/vercel-ai (Vercel AI SDK) . . . . . . . . . .  35
+     A.8.  @scopeblind/langchain (LangChain + LangGraph) . . . . . .  35
      A.9.  Microsoft Agent Governance Toolkit (Enterprise
-            Consumer)  . . . . . . . . . . . . . . . . . . . . . . .  41
-     A.10. AWS Cedar for Agents (WASM Policy Engine) . . . . . . . .  41
-     A.11. Sigstore Rekor (Transparency Log Anchor)  . . . . . . . .  42
-   Appendix B.  Example: Complete Verification Flow  . . . . . . . .  42
-     B.1.  Step 1: Generate Issuer Keys  . . . . . . . . . . . . . .  42
-     B.2.  Step 2: Sign a Receipt  . . . . . . . . . . . . . . . . .  42
-     B.3.  Step 3: Verify (CLI)  . . . . . . . . . . . . . . . . . .  43
-   Appendix C.  Changes from -03 . . . . . . . . . . . . . . . . . .  44
-   Appendix D.  Changes from -02 . . . . . . . . . . . . . . . . . .  45
-   Appendix E.  Changes from -01 . . . . . . . . . . . . . . . . . .  48
-   Appendix F.  Acknowledgements . . . . . . . . . . . . . . . . . .  50
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  51
-
-
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                 [Page 3]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
+            Consumer)  . . . . . . . . . . . . . . . . . . . . . . .  36
+     A.10. AWS Cedar for Agents (WASM Policy Engine) . . . . . . . .  36
+     A.11. Sigstore Rekor (Transparency Log Anchor)  . . . . . . . .  37
+   Appendix B.  Example: Complete Verification Flow  . . . . . . . .  37
+     B.1.  Step 1: Generate Issuer Keys  . . . . . . . . . . . . . .  37
+     B.2.  Step 2: Sign a Receipt  . . . . . . . . . . . . . . . . .  37
+     B.3.  Step 3: Verify (CLI)  . . . . . . . . . . . . . . . . . .  38
+   Appendix C.  Changes from -03 . . . . . . . . . . . . . . . . . .  39
+   Appendix D.  Changes from -02 . . . . . . . . . . . . . . . . . .  40
+   Appendix E.  Changes from -01 . . . . . . . . . . . . . . . . . .  43
+   Appendix F.  Acknowledgements . . . . . . . . . . . . . . . . . .  45
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  46
 
 1.  Introduction
 
@@ -187,6 +161,15 @@ Internet-Draft            Acta Signed Receipts              October 2026
    1.  *Portable evidence*: Receipts are self-contained JSON objects
        that can be stored, transmitted, and verified independently.
 
+
+
+
+
+Farley                    Expires 22 April 2027                 [Page 3]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    2.  *Cryptographic integrity*: Each receipt is signed using Ed25519
        (RFC 8032), ensuring tamper detection without PKI infrastructure.
 
@@ -196,6 +179,10 @@ Internet-Draft            Acta Signed Receipts              October 2026
    4.  *Minimal disclosure*: Receipts capture the decision metadata
        (tool name, decision, tier, timestamp) without logging raw
        request payloads, prompts, or sensitive parameters.
+
+   Further receipt types are listed in receipt-types.md, an informative
+   registry kept with this document at
+   https://github.com/VeritasActa/drafts/blob/main/receipt-types.md.
 
 1.1.  Relationship to MCP
 
@@ -214,18 +201,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    (e.g., "regulated"), enabling jurisdiction-aware policy evaluation
    without encoding legal regime information in the receipt itself.
 
-
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                 [Page 4]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
 1.2.  Terminology
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -240,6 +215,16 @@ Internet-Draft            Acta Signed Receipts              October 2026
    payload and signature.
 
 2.1.  Signed Envelope
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                 [Page 4]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    {
      "payload": { ... },
@@ -275,13 +260,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
       sb:issuer:<base58-fingerprint> where the fingerprint is the first
       12 characters of the Base58-encoded Ed25519 public key.
 
-
-
-Farley                    Expires 22 April 2027                 [Page 5]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    sig (REQUIRED):  The signature over the signing input defined in
       Section 6.6, encoded as a lowercase hexadecimal string.  The
       encoded length is determined by the algorithm named in alg and is
@@ -289,6 +267,20 @@ Internet-Draft            Acta Signed Receipts              October 2026
       therefore 128 hexadecimal characters, while other registered
       algorithms produce other lengths.  Verifiers MUST NOT reject a
       signature on encoded length alone.
+
+
+
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                 [Page 5]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
 2.2.  Payload
 
@@ -299,8 +291,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    appear in any payload type is listed here.
 
    type (REQUIRED):  A namespaced string identifying the receipt type.
-      Examples: "protectmcp:decision", "protectmcp:restraint",
-      "blindllm:arena-battle".
+      Examples: "protectmcp:decision", "blindllm:arena-battle".
 
    issued_at (REQUIRED):  ISO 8601 timestamp [RFC3339] of when the
       receipt was created.  MUST include timezone designator (typically
@@ -330,6 +321,15 @@ Internet-Draft            Acta Signed Receipts              October 2026
       the receipt signature and chain, and MUST ignore this member
       otherwise.
 
+   committed_fields_root (OPTIONAL):  The Merkle root committing to
+      selectively disclosable fields, as defined in Section 6.  Present
+      only in commitment mode.  A verifier that does not implement
+      commitment mode MUST ignore this member when verifying the
+      signature, though the member remains covered by that signature.
+
+   payload_digest (OPTIONAL):  A content-addressable hash of associated
+
+
 
 
 
@@ -338,13 +338,6 @@ Farley                    Expires 22 April 2027                 [Page 6]
 Internet-Draft            Acta Signed Receipts              October 2026
 
 
-   committed_fields_root (OPTIONAL):  The Merkle root committing to
-      selectively disclosable fields, as defined in Section 6.  Present
-      only in commitment mode.  A verifier that does not implement
-      commitment mode MUST ignore this member when verifying the
-      signature, though the member remains covered by that signature.
-
-   payload_digest (OPTIONAL):  A content-addressable hash of associated
       data (tool input, tool output, or other large payloads) that is
       too large to embed in the receipt.  Format: an object containing
       hash (SHA-256 hex string), size (byte count), and optionally
@@ -386,6 +379,13 @@ Internet-Draft            Acta Signed Receipts              October 2026
       hex string is deterministic: same inputs produce the same hash
       regardless of implementation language.
 
+      This field is RECOMMENDED when the receipt will be consumed by
+      external governance frameworks or cross-engine audit tools.
+
+   iteration_id (OPTIONAL):  A logical iteration grouping identifier for
+
+
+
 
 
 
@@ -394,10 +394,6 @@ Farley                    Expires 22 April 2027                 [Page 7]
 Internet-Draft            Acta Signed Receipts              October 2026
 
 
-      This field is RECOMMENDED when the receipt will be consumed by
-      external governance frameworks or cross-engine audit tools.
-
-   iteration_id (OPTIONAL):  A logical iteration grouping identifier for
       multi-step agent workflows.  When an agent runs in an optimization
       loop or a multi-round deliberation, receipts within the same
       iteration share the same iteration_id.  This enables behavioral
@@ -414,8 +410,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 3.  Receipt Types
 
-   This specification defines six receipt types.  Implementations MAY
-   define additional types using the namespaced type field.
+   This specification defines one receipt type, the Access Decision
+   Receipt.  Implementations MAY define additional types using the
+   namespaced type field.
 
 3.1.  Access Decision Receipt
 
@@ -445,6 +442,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 
 
+
+
+
 Farley                    Expires 22 April 2027                 [Page 8]
 
 Internet-Draft            Acta Signed Receipts              October 2026
@@ -457,11 +457,19 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    reason (OPTIONAL):  A machine-readable reason code for the decision.
       Examples: "tier_insufficient", "rate_exceeded", "policy_block",
-      "agent_refusal".
+      "agent_refusal".  When the decision is "deny", "policy_block"
+      records that the denial was imposed by external policy, and
+      "agent_refusal" that the agent imposed it on itself.
+
+   agent_id (OPTIONAL):  The identifier of the agent whose tool call was
+      evaluated.
+
+   agent_manifest_version (OPTIONAL):  The semantic version of the
+      agent's manifest at the time of the decision.
 
    agent_tier (OPTIONAL):  The trust tier of the requesting agent at the
       time of the decision.  One of: "unknown", "signed-known",
-      "evidenced", "privileged".
+      "privileged".
 
    required_tier (OPTIONAL):  The minimum trust tier required by the
       policy for this tool.
@@ -475,227 +483,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
       MUST NOT contain PII or be correlatable across sessions unless the
       operator explicitly configures session binding.
 
-3.2.  Restraint Receipt
-
-   Type: protectmcp:restraint
-
-   Records an agent's interaction with a policy boundary, specifically
-   whether the agent attempted to use a restricted tool and whether the
-   restriction was enforced by an external policy or self-imposed.
-
-   {
-     "type": "protectmcp:restraint",
-     "agent_id": "sb:agent:8xKm3Qw2Yb1c",
-     "agent_manifest_version": "1.2.0",
-     "tool_name": "rm_rf",
-     "decision": "deny",
-     "denial_type": "policy-block",
-     "issued_at": "2026-03-22T14:35:12.441Z",
-     "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-   }
-
-3.2.1.  Fields
-
-   agent_id (REQUIRED):  The identifier of the agent whose tool call was
-      evaluated.
-
-
-
-Farley                    Expires 22 April 2027                 [Page 9]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-   agent_manifest_version (REQUIRED):  The semantic version of the
-      agent's manifest at the time of the decision.
-
-   tool_name (REQUIRED):  The tool that was called or attempted.
-
-   decision (REQUIRED):  One of: "allow", "deny".
-
-   denial_type (OPTIONAL):  If the decision is "deny", indicates whether
-      the denial was imposed by external policy ("policy-block") or
-      self-imposed by the agent ("agent-refusal").
-
-3.3.  Arena Battle Receipt
-
-   Type: blindllm:arena-battle
-
-   Records the outcome of a competitive evaluation between two AI
-   agents, as conducted by a neutral arena platform.
-
-   {
-     "type": "blindllm:arena-battle",
-     "battle_id": "bat_9x8f7a2b",
-     "lane_id": "lane_creative_writing",
-     "agent_a": {
-       "id": "sb:agent:3mK9pQ7wXx2b",
-       "manifest_version": "2.1.0"
-     },
-     "agent_b": {
-       "id": "sb:agent:8xKm3Qw2Yb1c",
-       "manifest_version": "1.4.0"
-     },
-     "winner": "A",
-     "issued_at": "2026-03-22T15:00:00.000Z",
-     "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-   }
-
-3.3.1.  Fields
-
-   battle_id (REQUIRED):  Unique identifier for the battle instance.
-
-   lane_id (REQUIRED):  The evaluation category or "lane" in which the
-      battle occurred.
-
-   agent_a, agent_b (REQUIRED):  Objects identifying each participant,
-      containing: - id: The agent's passport identifier. -
-      manifest_version: The agent's manifest version at battle time.
-
-   winner (REQUIRED):  One of: "A", "B", "tie".
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 10]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-3.4.  Agent Lifecycle Receipt
-
-   Type: protectmcp:lifecycle
-
-   Records agent lifecycle events in multi-agent orchestration systems
-   (swarms, coordinator mode, scheduled agents).  Enables reconstruction
-   of the full agent topology from the receipt DAG.
-
-   {
-     "type": "protectmcp:lifecycle",
-     "lifecycle_event": "subagent_start",
-     "agent_id": "worker-a1b",
-     "agent_type": "general-purpose",
-     "parent_session_id": "ses_7f8a2b",
-     "team_name": "backend-ops",
-     "sandbox_state": "enabled",
-     "issued_at": "2026-04-01T10:15:00.000Z",
-     "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-   }
-
-3.4.1.  Fields
-
-   lifecycle_event (REQUIRED):  One of: "subagent_start",
-      "subagent_stop", "session_start", "session_end", "task_created",
-      "task_completed", "teammate_idle", "config_change".
-
-   agent_id (OPTIONAL):  The identifier of the agent involved in the
-      lifecycle event.
-
-   agent_type (OPTIONAL):  The type of agent (e.g., "coordinator",
-      "worker", "standalone", "general-purpose").
-
-   parent_session_id (OPTIONAL):  The session identifier of the parent/
-      coordinator agent.  Creates a verifiable parent-child relationship
-      in the DAG.
-
-   team_name (OPTIONAL):  The team or swarm name, if operating in multi-
-      agent mode.
-
-3.5.  Spending Authority Receipt
-
-   Type: scopeblind:spending_authority
-
-   Records the outcome of an issuer-blind spending authorization check.
-   Proves that an agent's purchase is within authorized limits without
-   revealing organizational identity, budget ceiling, or delegation
-   chain.
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 11]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-   {
-     "type": "scopeblind:spending_authority",
-     "amount": 99.50,
-     "currency": "USD",
-     "category": "cloud_compute",
-     "utilization_band": "low",
-     "decision": "allow",
-     "policy_digest": "sha256:a8f3...c91e",
-     "issued_at": "2026-04-01T12:00:00.000Z",
-     "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-   }
-
-3.5.1.  Fields
-
-   amount (REQUIRED):  The monetary amount of the transaction.
-
-   currency (REQUIRED):  ISO 4217 currency code (e.g., "USD").
-
-   category (OPTIONAL):  A classification of the spending type (e.g.,
-      "cloud_compute", "saas_subscription", "api_usage").
-
-   utilization_band (OPTIONAL):  A coarse indicator of budget
-      utilization.  One of: "low" (<25%), "medium" (25-75%), "high"
-      (75-100%), "exceeded".  The exact budget ceiling is NOT disclosed,
-      only the band.  This prevents price discrimination while proving
-      budget compliance.
-
-   decision (REQUIRED):  One of: "allow", "deny".
-
-   The receipt deliberately EXCLUDES: organization name, total budget
-   ceiling, exact remaining budget, agent identity, and delegation
-   chain.  Verification uses VOPRF ([RFC9497]) to confirm receipt
-   validity without the verifier learning which organization issued it.
-
-3.6.  Formal Debate Receipt
-
-   Type: blindllm:formal-debate
-
-   Records the outcome of a structured debate with audience and judge
-   scoring.  Extends the arena battle format with additional governance
-   fields.
-
-
-
-
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 12]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-   {
-     "type": "blindllm:formal-debate",
-     "debate_id": "dbt_4f2a8c",
-     "spec_id": "spec_ai_safety_v2",
-     "lane_id": "lane_policy",
-     "artifact_hash": "sha256:b3c4d5e6...",
-     "resolution_hash": "sha256:f7a8b9c0...",
-     "pro": {
-       "id": "sb:agent:3mK9pQ7wXx2b",
-       "manifest_version": "2.1.0"
-     },
-     "con": {
-       "id": "sb:agent:8xKm3Qw2Yb1c",
-       "manifest_version": "1.4.0"
-     },
-     "audience_winner": "pro",
-     "judge_winner": "pro",
-     "restraint_result": "clean",
-     "issued_at": "2026-03-22T16:30:00.000Z",
-     "issuer_id": "sb:issuer:4Kpm7Q3wXx2b"
-   }
-
 4.  Evidence Predicate
 
    An Access Decision Receipt records which decision was made and, via
@@ -706,6 +493,18 @@ Internet-Draft            Acta Signed Receipts              October 2026
    OPTIONAL evidence field records that basis.  It is defined here for
    the Access Decision Receipt; other receipt types MAY carry it with
    the same semantics.
+
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                 [Page 9]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    "evidence": [
      { "dimension": "data_rights", "state": "satisfied",
@@ -720,15 +519,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
        "source": { "authority": "runtime:request-origin",
                    "ref": "request/origin-header" } }
    ]
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 13]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
 4.1.  Fields
 
@@ -764,6 +554,14 @@ Internet-Draft            Acta Signed Receipts              October 2026
    The signed claim is the JSON object built from the entry's dimension,
    state, and as_of together with the source's ref: { dimension, ref,
    state } plus an as_of member when the entry carries one.  When as_of
+
+
+
+Farley                    Expires 22 April 2027                [Page 10]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    is absent the as_of member is OMITTED from the claim; it MUST NOT be
    encoded as null.  The producer canonicalizes this object under JCS
    and signs the resulting bytes; source.sig is that signature.  A
@@ -778,14 +576,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    no verifier action.  It is canonicalized under JCS with the rest of
    the payload and is therefore signed.  It MUST NOT carry raw evidence
    content (positions, prompts, tool payloads); it carries states,
-
-
-
-Farley                    Expires 22 April 2027                [Page 14]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    references, digests, and timestamps only.
 
    Evidence entries MAY be committed and selectively disclosed under
@@ -794,7 +584,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    while withholding its source, because a relying party cannot apply
    Section 4.3 to an entry whose source it cannot see, and a disclosed
    "satisfied" with no visible source is precisely the false assurance
-   Section 9.9 warns against.  Withholding an entry in full is
+   Section 7.9 warns against.  Withholding an entry in full is
    permitted; a relying party MUST NOT infer from a disclosed set that
    no further entries exist.
 
@@ -806,19 +596,27 @@ Internet-Draft            Acta Signed Receipts              October 2026
    only that the signer ASSERTED them.  A present or trusted-looking
    source.kid is therefore NOT proof that the named authority attested
    anything.  It is exactly the in-payload, signer-controlled value that
-   Section 9.5 warns is "strictly worse than no signature at all,
+   Section 7.5 warns is "strictly worse than no signature at all,
    because it provides false assurance."
 
    A relying party MUST NOT treat any evidence dimension as INDEPENDENT
    corroboration unless ALL of the following hold: (1) the entry carries
    a source.sig; (2) the relying party obtains the corresponding public
-   key OUT OF BAND via the mechanisms in Section 9.5 (not from the
+   key OUT OF BAND via the mechanisms in Section 7.5 (not from the
    receipt) and confirms that key's identifier equals source.kid; (3)
    the relying party's out-of-band trust policy identifies the source
    key as belonging to a control domain DISTINCT from the receipt
    signer.  At a minimum, the source public key MUST NOT equal the key
    that signed the enclosing receipt; and (4) source.sig verifies under
    that key over the JCS bytes of the claim.
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 11]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    Condition 3 is load-bearing: every relying party MUST already pin the
    receipt signer's own key out of band, because that is the only way to
@@ -831,16 +629,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    source.kid resolves to the receipt's signing key, or whose control
    domain cannot be established independently, is self-attestation and
    MUST NOT be counted as independent corroboration.
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 15]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    A dimension without a verifiable, independent source.sig is the
    receipt signer's own claim and MUST NOT raise the assurance a relying
@@ -879,6 +667,13 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    4.  Convert the canonical JSON string to a UTF-8 byte sequence.
 
+
+
+Farley                    Expires 22 April 2027                [Page 12]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    5.  Sign the byte sequence using Ed25519 [RFC8032] with the issuer's
        secret key.
 
@@ -889,14 +684,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
        the payload exactly as constructed; canonicalization is performed
        only to derive the signing input and its output is not
        transmitted.
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 16]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
 5.2.  Verification Process
 
@@ -920,7 +707,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
        receipt.  The RECOMMENDED resolution mechanism is a JWK Set
        endpoint [RFC7517] at /.well-known/acta-keys.json.  The key MUST
        be obtained through that mechanism or another out-of-band trust
-       anchor, never from the receipt itself; see Section 9.5.
+       anchor, never from the receipt itself; see Section 7.5.
 
    5.  If the key source provides a validity window for the key, apply
        it to the receipt's issued_at as defined in Section 5.5.
@@ -935,6 +722,14 @@ Internet-Draft            Acta Signed Receipts              October 2026
        verifier cannot carry out step 4 or step 6, cannot apply in
        step 5 a window the key source provides, or is configured to
        require a window the key source does not provide, the outcome is
+
+
+
+Farley                    Expires 22 April 2027                [Page 13]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
        undecidable, as defined in Section 5.3, and the receipt MUST NOT
        be reported as either authentic or rejected.  Otherwise the
        receipt is authentic and has not been tampered with.
@@ -946,21 +741,13 @@ Internet-Draft            Acta Signed Receipts              October 2026
    consumer can act on, including any process exit status:
 
    valid:  The signing input was reconstructed for the shape received, a
-
-
-
-Farley                    Expires 22 April 2027                [Page 17]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
       verification key was obtained from a trust anchor outside the
       receipt, and the signature verified under it.  Where the key
       source provides a validity window for the key, the receipt was
       issued inside it.
 
    invalid:  The check ran and failed: the signature did not verify
-      under the trust-anchored key; a carried key (Section 9.5) differs
+      under the trust-anchored key; a carried key (Section 7.5) differs
       from the trust-anchored key; the object canonicalized carries a
       signature member, including as null or the empty string
       (Section 6.6), whether or not the signature over it verifies; the
@@ -975,7 +762,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    undecidable:  The check could not run.  No verification key was
       available from a trust anchor outside the receipt (including the
       case where the only key on offer is one carried inside the signed
-      bytes, which Section 9.5 forbids using), the receipt shape was not
+      bytes, which Section 7.5 forbids using), the receipt shape was not
       recognized, the signature or payload member was absent, the
       algorithm was unsupported, a chain link names a hash algorithm
       other than SHA-256 (Section 6.7), a validity window the key source
@@ -988,6 +775,16 @@ Internet-Draft            Acta Signed Receipts              October 2026
    further check could make the receipt valid; undecidable if none
    failed and at least one could not run; and valid only if every check
    ran and passed.
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 14]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    An undecidable outcome MUST NOT be reported as invalid, because
    nothing about the receipt has been shown false, and MUST NOT be
@@ -1002,17 +799,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
    from a bare failure status, whether the verifier had refused the
    embedded key (the rule enforced) or had failed to recognize the
    receipt at all (the rule never reached); a conformance script read
-
-
-
-Farley                    Expires 22 April 2027                [Page 18]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    the same status as "malformed", and a gate built on it went green
    having measured nothing.  Naming the cause is what makes the three
-   outcomes testable; see Section 6.11.
+   outcomes testable; see Section 6.10.
 
 5.4.  Public Key Distribution
 
@@ -1046,6 +835,13 @@ Internet-Draft            Acta Signed Receipts              October 2026
    may be absent; an absent bound leaves the window open on that side.
    A bound present as null is not a valid timestamp.
 
+
+
+Farley                    Expires 22 April 2027                [Page 15]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    {
      "kty": "OKP",
      "crv": "Ed25519",
@@ -1055,16 +851,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
      "valid_from": "2026-01-01T00:00:00Z",
      "valid_until": "2026-06-01T00:00:00Z"
    }
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 19]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    The window runs from valid_from, included, to valid_until, excluded.
    A receipt whose issued_at is before valid_from, or at or after
@@ -1099,7 +885,18 @@ Internet-Draft            Acta Signed Receipts              October 2026
    detect a compromised key used to sign receipts dated inside the
    window.  Bounding when a receipt was actually issued requires its
    position in a chain whose head is committed somewhere the issuer
-   cannot rewrite; see Section 9.7.
+   cannot rewrite; see Section 7.7.
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 16]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
 6.  Commitment Mode (Optional Extension)
 
@@ -1109,18 +906,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    inclusion proofs for individual fields.  The commitment construction
    is SHA-256 over a salt-prefixed canonical leaf, organized into a
    Merkle tree following [RFC6962] domain-separation conventions.
-
-
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 20]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    A receipt that uses commitment mode includes a single new field,
    committed_fields_root, in its payload.  Verifiers that do not
@@ -1160,6 +945,15 @@ Internet-Draft            Acta Signed Receipts              October 2026
    padding by recursively splitting on the largest power of two,
    matching [RFC6962] Section 2.1.
 
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 17]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    The committed_fields_root field MUST be the lowercase hex encoding of
    the resulting 32-byte Merkle root.
 
@@ -1167,16 +961,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    Each leaf encodes a single committed field as a JCS [RFC8785]-
    canonicalized JSON object:
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 21]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    canonical_leaf_bytes = JCS({
      "name":  field_name,
@@ -1219,6 +1003,13 @@ Internet-Draft            Acta Signed Receipts              October 2026
    over the JCS-canonicalized object, not over a raw concatenation.
    This sidesteps salt-ordering ambiguity entirely.
 
+
+
+Farley                    Expires 22 April 2027                [Page 18]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    For implementations that emit a separate per-field commitment value
    alongside the Merkle leaf (for example, in earlier draft versions or
    in a per-field disclosure envelope), the per-field commitment MUST be
@@ -1226,13 +1017,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    UTF-8 encoding of the JSON-stringified value.  Implementations MUST
    NOT use the reverse ordering SHA-256(value_bytes || salt); receipts
    that do so MUST be rejected as malformed.
-
-
-
-Farley                    Expires 22 April 2027                [Page 22]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
 6.5.  Selective Disclosure
 
@@ -1274,6 +1058,14 @@ Internet-Draft            Acta Signed Receipts              October 2026
    process in Section 5.1, used as the message input to the signature
    algorithm with no intermediate hash.
 
+
+
+
+Farley                    Expires 22 April 2027                [Page 19]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    Two receipt shapes are in use, and the signing input differs between
    them.  An implementation MUST determine the shape before computing
    the signing input, and MUST NOT apply one shape's rule to the other;
@@ -1281,15 +1073,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    verification of correctly signed receipts to fail.
 
    Envelope shape:  The receipt is the object shown in Section 2.1,
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 23]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
       carrying exactly two members: a payload member and a signature
       member that is an object with alg, kid, and sig.  The signing
       input is JCS(payload): the payload member canonicalized on its
@@ -1313,7 +1096,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    The alg and kid members of the signature object are therefore not
    covered by the signature.  A verifier resolves the key from kid
-   through the mechanisms in Section 9.5 and verification fails if
+   through the mechanisms in Section 7.5 and verification fails if
    either member is altered, so this is not a substitution vector, but a
    verifier MUST NOT treat either member as attested content.
 
@@ -1330,21 +1113,21 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    Two choices here are deliberate.
 
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 20]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    The preimage is the whole receipt, not its payload member.  Including
    the signature binds the chain to specific signed bytes, so re-signing
    an identical payload, after a key rotation for instance, produces a
    distinct chain link and is visible as a chain event.  Hashing the
    payload alone would make a re-signed receipt indistinguishable from
    the original, which is the opposite of what a chain is for.
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 24]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    The algorithm prefix makes the digest self-describing, matching the
    form used by policy_digest and by source.ref in Section 4.  Earlier
@@ -1387,6 +1170,14 @@ Internet-Draft            Acta Signed Receipts              October 2026
    undecidable, as Section 6.7 states.  Absence never satisfies a
    supplied predecessor.  A receipt that omits the member is a genesis
    or an unchained receipt (Section 2.2), and neither follows the
+
+
+
+Farley                    Expires 22 April 2027                [Page 21]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    receipt supplied.
 
    When a caller gives a verifier a sequence of receipts without
@@ -1394,14 +1185,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    holds one chain per session, a receipt that omits previousReceiptHash
    begins a new chain: it is a genesis or an unchained receipt, as
    Section 2.2 says.  The verifier MUST NOT report it as linked to the
-
-
-
-Farley                    Expires 22 April 2027                [Page 25]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    receipt before it, and SHOULD report where each chain in the sequence
    begins.  A receipt that carries a link is checked against the receipt
    before it, as for a supplied predecessor, except the first receipt of
@@ -1437,6 +1220,20 @@ Internet-Draft            Acta Signed Receipts              October 2026
    The policy digest commits to a manifest of the exact policy source
    files:
 
+
+
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 22]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    M = {
      "construction": "acta-policy-digest-v1",
      "engine": <engine identifier, e.g. "cedar" or "builtin">,
@@ -1449,14 +1246,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    }
 
    policy_digest = "sha256:" || lowercase_hex(SHA-256(UTF-8(JCS(M))))
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 26]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    Rules:
 
@@ -1490,29 +1279,22 @@ Internet-Draft            Acta Signed Receipts              October 2026
    prefix.  Verifiers SHOULD treat such values as opaque labels rather
    than recomputable commitments.
 
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 23]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
 6.8.1.  Policy Publication
 
    An issuer that wants third parties to verify which policy governed
    its decisions publishes the policy bytes and the preimage
    specification together, addressed by the digest itself:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 27]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    https://<issuer-domain>/.well-known/acta-policies/<hex>.json
 
@@ -1556,39 +1338,25 @@ Internet-Draft            Acta Signed Receipts              October 2026
    contain receipts signed under different algorithms; verifiers MUST
    handle each receipt independently.
 
+
+
+
+Farley                    Expires 22 April 2027                [Page 24]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    The hash-based constructions in this document degrade gracefully
    under quantum attack rather than breaking.  Grover's algorithm
    reduces SHA-256 pre-image resistance to roughly 2^128 work, which
    remains infeasible.  Collision resistance is already bounded at 2^128
    classically by the birthday bound, and known quantum collision
    methods do not improve on that at any practical memory or time cost.
-
-
-
-Farley                    Expires 22 April 2027                [Page 28]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    These constructions therefore need no change.  The classical-
    cryptography component is the outer signature, which the algorithm
    agility above allows to be upgraded in place.
 
-6.10.  Context Binding for ZK Proofs
-
-   When a receipt's principal (or any committed field) references a
-   zero-knowledge proof produced under a separate ZK protocol (e.g.,
-   [I-D.google-cfrg-libzk]), the ZK proof MUST bind to the receipt's
-   committed_fields_root as a public input or context hash.  Without
-   this binding, a valid ZK proof is replayable into a different receipt
-   with a different committed_fields_root.
-
-   The committed-fields root serves double duty: it commits to the
-   selectively-disclosable receipt content, and it provides a
-   deterministic, signature-independent context hash that any external
-   proof system can bind against.
-
-6.11.  Test Vectors
+6.10.  Test Vectors
 
    An interoperability test suite is published alongside this draft at
    https://github.com/ScopeBlind/agent-governance-testvectors (Apache-
@@ -1616,16 +1384,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
       receipt carries, and a receipt whose digest was not computed that
       way fails.
 
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 29]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    *  The three verification outcomes of Section 5.3 for a key carried
       inside the signed bytes: with no key supplied from outside the
       receipt, the outcome is undecidable and names the embedded key as
@@ -1633,6 +1391,16 @@ Internet-Draft            Acta Signed Receipts              October 2026
       differs from the carried one, the outcome is invalid; with the
       trust-anchored key, valid.  A verifier that resolves the carried
       key and reports valid fails the suite.
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 25]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    *  The evidence predicate of Section 4: decision receipts whose
       evidence entries verify under the named source, and structurally
@@ -1669,78 +1437,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
    test-vector salts and MUST follow the salt construction guidance in
    Section 6.4.
 
-7.  Trust Tiers
+7.  Security Considerations
 
-   This specification defines a four-level trust hierarchy for agent
-   identity.  Trust tiers are used by policy engines to gate tool
-   access.
-
-
-
-Farley                    Expires 22 April 2027                [Page 30]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-   unknown:  No identity presented.  Default tier for anonymous
-      connections.
-
-   signed-known:  Agent presents a valid signed manifest with a
-      verifiable Ed25519 public key.  Identity is pseudonymous but
-      consistent.
-
-   evidenced:  Agent has accumulated verifiable evidence receipts (e.g.,
-      arena battle outcomes, successful restraint records) that
-      demonstrate a track record of trustworthy behavior.
-
-   privileged:  Operator has explicitly granted elevated access.
-      Typically requires out-of-band verification (e.g., organization
-      membership, contractual agreement).
-
-   Trust tier transitions are unidirectional within a session but MAY be
-   re-evaluated across sessions based on accumulated evidence.
-
-8.  Agent Identity
-
-8.1.  Passport Manifest
-
-   An agent's identity is expressed as a signed manifest:
-
-   {
-     "type": "scopeblind:agent-manifest",
-     "id": "sb:agent:3mK9pQ7wXx2b",
-     "version": "2.1.0",
-     "previous_version": "2.0.0",
-     "created_at": "2026-03-20T10:00:00Z",
-     "public_key": "<base58-ed25519-public-key>"
-   }
-
-   Manifests are IMMUTABLE once signed.  Version changes create new
-   manifests that reference their predecessor via previous_version,
-   forming a verifiable version chain.
-
-8.2.  DPoP Binding (Future)
-
-   For remote MCP transports (HTTP/SSE), agent identity MAY be bound to
-   per-request proof-of-possession using DPoP [RFC9449].  The
-   auth_key_bindings field in the manifest links the agent's Ed25519
-   identity key to one or more P-256 DPoP keys.
-
-   This binding creates a verifiable delegation chain:
-
-   Operator -> Agent Identity (Ed25519) -> Request Auth (P-256 DPoP)
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 31]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-9.  Security Considerations
-
-9.1.  Replay Protection
+7.1.  Replay Protection
 
    Receipts include an issued_at timestamp but do not include a nonce or
    sequence number.
@@ -1749,6 +1448,15 @@ Internet-Draft            Acta Signed Receipts              October 2026
    evidence of a currently effective authorization.  In that case
    verifiers SHOULD reject receipts whose timestamps are unreasonably
    old (implementation-defined; 24 hours is RECOMMENDED as a default).
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 26]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    It does not apply to _archival verification_: examining a receipt as
    a record of what was authorized at some past time, which is one of
@@ -1761,7 +1469,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    For environments requiring stronger replay protection,
    implementations MAY add a nonce field to the payload.
 
-9.2.  Key Compromise
+7.2.  Key Compromise
 
    If an issuer's signing key is compromised, all receipts signed with
    that key become suspect.  Issuers SHOULD implement key rotation by
@@ -1772,7 +1480,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    window detects a key still in use after an honest rotation, not a
    compromised key used to sign receipts dated inside the window.
 
-9.3.  Payload Privacy
+7.3.  Payload Privacy
 
    Receipts are designed to capture decision metadata, NOT request
    content.  Implementations MUST NOT include raw prompts, tool
@@ -1783,25 +1491,14 @@ Internet-Draft            Acta Signed Receipts              October 2026
    session_id field SHOULD be an opaque identifier that is not
    correlatable across sessions.
 
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 32]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-9.4.  Canonicalization Attacks
+7.4.  Canonicalization Attacks
 
    The signing process relies on JCS [RFC8785] for deterministic
    serialization.  Implementations MUST use a conformant JCS
    implementation to prevent canonicalization divergence attacks where
    the signed bytes differ from the verified bytes.
 
-9.5.  Key Distribution and Trust Anchors
+7.5.  Key Distribution and Trust Anchors
 
    Receipts are designed to be verified by parties who do not trust the
    issuer and did not observe the decision being made.  This property
@@ -1809,6 +1506,13 @@ Internet-Draft            Acta Signed Receipts              October 2026
    auditability claim of this document.  The property holds only if the
    verification key a verifier uses to check a signature is sourced
    through a channel outside the signed payload itself.
+
+
+
+Farley                    Expires 22 April 2027                [Page 27]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    A carried key is the value of a public_key, verification_key or
    verification_jwk member of the signed bytes of a receipt.  A verifier
@@ -1840,16 +1544,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
        (e.g., a pinned Ed25519 public key loaded from a verifier
        configuration file).
 
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 33]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    4.  A well-known endpoint of the issuer's domain, as described in
        Section 5.4, provided the domain binding is independently
        authenticatable.
@@ -1863,6 +1557,18 @@ Internet-Draft            Acta Signed Receipts              October 2026
    anchored by a locally configured trust anchor.  This supports defense
    in depth when an operator layers key provenance constraints above
    signature verification.
+
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 28]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    Implementations MAY provide a deprecated escape hatch (e.g., a
    command-line flag) that allows acceptance of embedded keys during a
@@ -1878,7 +1584,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    behavior across representative envelope shapes (flat v1, structured
    v2, Passport-style, full-JWK-embedded).
 
-9.6.  Verifier Identity Is Not Receipt Content
+7.6.  Verifier Identity Is Not Receipt Content
 
    A receipt is signed by its issuer at issue time.  Nothing a verifier
    learns or computes later can be added to it without invalidating that
@@ -1893,18 +1599,11 @@ Internet-Draft            Acta Signed Receipts              October 2026
    receipt it has verified, and a consumer MUST NOT treat any member of
    a receipt as evidence about the party that verified it.
 
-9.7.  Chain Completeness and Truncation
+7.7.  Chain Completeness and Truncation
 
    A receipt chain proves that the receipts a verifier holds have not
    been altered and have not been reordered.  It does not prove that the
    verifier holds all of them.
-
-
-
-Farley                    Expires 22 April 2027                [Page 34]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
 
    Removing receipts from the end of a chain leaves every remaining link
    and every remaining signature valid.  A verifier presented with the
@@ -1919,6 +1618,14 @@ Internet-Draft            Acta Signed Receipts              October 2026
    Detecting truncation requires a commitment, external to the chain, to
    the number of receipts and the terminal hash at a given point, signed
    by the issuer.  A verifier that checks a chain against such a
+
+
+
+Farley                    Expires 22 April 2027                [Page 29]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
    commitment can detect omission at the end; a verifier given no
    commitment MUST NOT report the set as complete, and SHOULD report
    that it verified integrity only.
@@ -1939,7 +1646,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    shown, through a mechanism such as a witnessed or gossiped log, and
    no construction in this document provides it.
 
-9.8.  Decisions Are Not Executions
+7.8.  Decisions Are Not Executions
 
    An Access Decision Receipt attests that a policy was evaluated and
    what it returned.  It does not attest that the action then executed,
@@ -1955,20 +1662,27 @@ Internet-Draft            Acta Signed Receipts              October 2026
    one.  The value "require_approval" makes the same separation explicit
    for held actions.
 
-
-
-Farley                    Expires 22 April 2027                [Page 35]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    Conflating the two is a common error in receipt formats, and it fails
    in the direction that matters: a reviewer concludes an action
    occurred because it was permitted, or that it was blocked because no
    execution receipt exists, when the receipt set only ever established
    the decision.
 
-9.9.  Evidence Predicate: False Assurance
+
+
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 30]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
+
+7.9.  Evidence Predicate: False Assurance
 
    The OPTIONAL evidence field (Section 4) can make a decision LOOK
    well-founded without being so: source.authority, source.kid, and the
@@ -1986,7 +1700,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    dimensions carrying an independent, verified source.sig from those
    that do not.
 
-10.  IANA Considerations
+8.  IANA Considerations
 
    This document has no IANA actions.
 
@@ -2001,26 +1715,28 @@ Internet-Draft            Acta Signed Receipts              October 2026
       which does not let a recipient distinguish a receipt from
       arbitrary JSON before parsing it.
 
-11.  References
+9.  References
 
-11.1.  Normative References
+9.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
 
-
-
-
-Farley                    Expires 22 April 2027                [Page 36]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 31]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    [RFC8032]  Josefsson, S. and I. Liusvaara, "Edwards-Curve Digital
               Signature Algorithm (EdDSA)", RFC 8032,
@@ -2045,11 +1761,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
               DOI 10.17487/RFC7517, May 2015,
               <https://www.rfc-editor.org/info/rfc7517>.
 
-   [RFC9449]  Fett, D., Campbell, B., Bradley, J., Lodderstedt, T.,
-              Jones, M., and D. Waite, "OAuth 2.0 Demonstrating Proof of
-              Possession (DPoP)", RFC 9449, DOI 10.17487/RFC9449,
-              September 2023, <https://www.rfc-editor.org/info/rfc9449>.
-
    [RFC6962]  Laurie, B., Langley, A., and E. Kasper, "Certificate
               Transparency", RFC 6962, DOI 10.17487/RFC6962, June 2013,
               <https://www.rfc-editor.org/info/rfc6962>.
@@ -2067,18 +1778,21 @@ Internet-Draft            Acta Signed Receipts              October 2026
               Encodings", RFC 4648, DOI 10.17487/RFC4648, October 2006,
               <https://www.rfc-editor.org/info/rfc4648>.
 
-
-
-Farley                    Expires 22 April 2027                [Page 37]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
-11.2.  Informative References
+9.2.  Informative References
 
    [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
               (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
               <https://www.rfc-editor.org/info/rfc7519>.
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 32]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    [RFC9497]  Davidson, A. and C. A. Wood, "Oblivious Pseudorandom
               Functions (OPRFs) Using Prime-Order Groups", RFC 9497,
@@ -2119,22 +1833,22 @@ Appendix A.  Implementation Status
    This section records the status of known implementations of the
    protocol defined by this specification at the time of publication.
 
-
-
-
-
-
-
-Farley                    Expires 22 April 2027                [Page 38]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
 A.1.  protect-mcp (Reference Implementation)
 
    *  Organization: ScopeBlind
 
    *  Implementation: https://www.npmjs.com/package/protect-mcp
+
+
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 33]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    *  Description: Security gateway for MCP servers with Cedar WASM
       policy evaluation, Ed25519-signed decision receipts, and Claude
@@ -2178,20 +1892,19 @@ A.4.  protect-mcp-adk (Google ADK)
 
    *  Organization: ScopeBlind
 
-
-
-
-Farley                    Expires 22 April 2027                [Page 39]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    *  Implementation: https://pypi.org/project/protect-mcp-adk/
 
    *  Description: Google Agent Development Kit plugin for Ed25519
       receipt signing.  BasePlugin subclass, wraps tool calls.
 
    *  Coverage: Access Decision Receipts.
+
+
+
+Farley                    Expires 22 April 2027                [Page 34]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    *  Licensing: MIT.
 
@@ -2235,18 +1948,19 @@ A.7.  @scopeblind/vercel-ai (Vercel AI SDK)
 
    *  Coverage: Access Decision Receipts.
 
-
-
-Farley                    Expires 22 April 2027                [Page 40]
-
-Internet-Draft            Acta Signed Receipts              October 2026
-
-
    *  Licensing: MIT.
 
 A.8.  @scopeblind/langchain (LangChain + LangGraph)
 
    *  Organization: ScopeBlind
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 35]
+
+Internet-Draft            Acta Signed Receipts              October 2026
+
 
    *  Implementation: https://www.npmjs.com/package/@scopeblind/
       langchain
@@ -2291,14 +2005,18 @@ A.10.  AWS Cedar for Agents (WASM Policy Engine)
    *  Coverage: Policy evaluation inputs; does not produce receipts
       directly.
 
+   *  Licensing: Apache-2.0.
 
 
-Farley                    Expires 22 April 2027                [Page 41]
+
+
+
+
+
+Farley                    Expires 22 April 2027                [Page 36]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
-
-   *  Licensing: Apache-2.0.
 
 A.11.  Sigstore Rekor (Transparency Log Anchor)
 
@@ -2349,7 +2067,9 @@ B.2.  Step 2: Sign a Receipt
 
 
 
-Farley                    Expires 22 April 2027                [Page 42]
+
+
+Farley                    Expires 22 April 2027                [Page 37]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2405,7 +2125,7 @@ B.3.  Step 3: Verify (CLI)
 
 
 
-Farley                    Expires 22 April 2027                [Page 43]
+Farley                    Expires 22 April 2027                [Page 38]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2456,12 +2176,12 @@ Appendix C.  Changes from -03
       undecidable, and with no window a verifier reports the key's
       validity at issuance as not established rather than as valid.  The
       verification process gains a step for it, Section 5.3 lists the
-      new invalid and undecidable causes, and Section 6.11 lists the
+      new invalid and undecidable causes, and Section 6.10 lists the
       corresponding vectors.
 
 
 
-Farley                    Expires 22 April 2027                [Page 44]
+Farley                    Expires 22 April 2027                [Page 39]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2487,9 +2207,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
       a log that interleaves chains has to be split into them first,
       which this document does not define.  Section 2.2 points at the
       new subsection, Section 5.3 lists the new invalid and undecidable
-      causes, and Section 6.11 lists the corresponding vectors.
+      causes, and Section 6.10 lists the corresponding vectors.
 
-   *  Section 6.11: the interoperability suite is named, what it checks
+   *  Section 6.10: the interoperability suite is named, what it checks
       is listed (both shapes, the chain hash rule, the policy digest
       rule, the three outcomes for a key carried inside the signed
       bytes, the evidence predicate), and three independent
@@ -2517,13 +2237,13 @@ Appendix D.  Changes from -02
 
 
 
-Farley                    Expires 22 April 2027                [Page 45]
+Farley                    Expires 22 April 2027                [Page 40]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
 
       states the condition under which a dimension counts as independent
-      corroboration, and Section 9.9 records the false-assurance risk:
+      corroboration, and Section 7.9 records the false-assurance risk:
       every field is inside the payload the receipt signer controls, so
       a named authority or key id is not proof that the named authority
       attested anything.
@@ -2540,7 +2260,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
    *  Section 2.2: verifier_sigil is removed.  It described the verifier
       that checked a receipt but was listed as a signed payload member,
       which cannot be produced: the issuer signs the payload before any
-      verifier sees it.  See Section 9.6.
+      verifier sees it.  See Section 7.6.
 
    *  Section 2.1: names the envelope as the shape new implementations
       emit and points at the flat shape, rather than presenting one
@@ -2573,12 +2293,12 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 
 
-Farley                    Expires 22 April 2027                [Page 46]
+Farley                    Expires 22 April 2027                [Page 41]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
 
-   *  New Section 9.7: a chain proves no alteration and no reordering,
+   *  New Section 7.7: a chain proves no alteration and no reordering,
       not that the verifier holds every receipt.  Truncating the newest
       receipts leaves all remaining links and signatures valid,
       detecting it requires an external commitment to count and terminal
@@ -2586,7 +2306,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
       reaches somewhere the issuer cannot rewrite.  Records non-
       equivocation as out of scope rather than implied.
 
-   *  New Section 9.8: a decision receipt attests policy evaluation, not
+   *  New Section 7.8: a decision receipt attests policy evaluation, not
       that the action executed.  Names the post-execution receipt as the
       separate artifact and identifies the fields that distinguish one
       from the other, a distinction the prior text carried only in a
@@ -2629,7 +2349,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 
 
-Farley                    Expires 22 April 2027                [Page 47]
+Farley                    Expires 22 April 2027                [Page 42]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2666,7 +2386,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
       deliberately not carried, so implementers do not assume a padded
       fixed-depth tree and diverge on non-power-of-two trees.
 
-   *  Section 9.1: the freshness window is scoped to live presentation
+   *  Section 7.1: the freshness window is scoped to live presentation
       and explicitly does not apply to archival verification, which it
       would otherwise have rejected wholesale.
 
@@ -2685,7 +2405,7 @@ Appendix E.  Changes from -01
 
 
 
-Farley                    Expires 22 April 2027                [Page 48]
+Farley                    Expires 22 April 2027                [Page 43]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2741,7 +2461,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 
 
-Farley                    Expires 22 April 2027                [Page 49]
+Farley                    Expires 22 April 2027                [Page 44]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2797,7 +2517,7 @@ Appendix F.  Acknowledgements
 
 
 
-Farley                    Expires 22 April 2027                [Page 50]
+Farley                    Expires 22 April 2027                [Page 45]
 
 Internet-Draft            Acta Signed Receipts              October 2026
 
@@ -2853,4 +2573,4 @@ Author's Address
 
 
 
-Farley                    Expires 22 April 2027                [Page 51]
+Farley                    Expires 22 April 2027                [Page 46]
