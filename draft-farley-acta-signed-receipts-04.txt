@@ -754,10 +754,11 @@ Internet-Draft            Acta Signed Receipts              October 2026
       receipt was issued outside its key's validity window; a digest
       does not match; a chain link is malformed or a receipt does not
       follow the receipt it is checked against (Section 6.7); or, in the
-      envelope shape, the payload lacks type, issued_at or issuer_id, or
-      issuer_id differs from signature.kid.  An invalid receipt MUST be
-      rejected.  Conformance of the payload to its declared type is
-      reported separately and does not change the outcome.
+      envelope shape, the payload carries an issuer_id that differs from
+      signature.kid.  An invalid receipt MUST be rejected.  A payload
+      that lacks a member Section 2.2 requires, or that does not conform
+      to its declared type, is reported separately and does not change
+      the outcome.
 
    undecidable:  The check could not run.  No verification key was
       available from a trust anchor outside the receipt (including the
@@ -775,7 +776,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
    further check could make the receipt valid; undecidable if none
    failed and at least one could not run; and valid only if every check
    ran and passed.
-
 
 
 
@@ -867,10 +867,8 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    *  If the window cannot be applied, because a bound is not a valid
       timestamp, valid_until is not after valid_from, or the signed
-      issued_at is not a valid timestamp (or, in the flat shape, is
-      absent), the outcome is undecidable and names that cause.  An
-      envelope whose payload lacks issued_at is invalid instead, as
-      Section 5.3 says.
+      issued_at is absent or not a valid timestamp, the outcome is
+      undecidable and names that cause.
 
    When the key source provides no window, the verifier cannot establish
    whether the key was valid when the receipt was issued.  It MUST
@@ -888,6 +886,8 @@ Internet-Draft            Acta Signed Receipts              October 2026
    window.  Bounding when a receipt was actually issued requires its
    position in a chain whose head is committed somewhere the issuer
    cannot rewrite; see Section 7.7.
+
+
 
 
 
@@ -2393,10 +2393,10 @@ Appendix C.  Changes from -03
       it.  Among the causes of an invalid outcome are a carried key that
       differs from the trust-anchored key; a signature member in the
       object canonicalized, whether or not the signature verifies; and,
-      in the envelope shape, a payload without type, issued_at or
-      issuer_id, or whose issuer_id differs from signature.kid.
-      Conformance of the payload to its declared type is reported
-      separately and does not change the outcome.
+      in the envelope shape, a payload whose issuer_id differs from
+      signature.kid.  A payload that lacks a member Section 2.2
+      requires, or that does not conform to its declared type, is
+      reported separately and does not change the outcome.
 
    *  Section 5.5 (new): key validity windows.  When the key source
       gives a key a valid_from / valid_until window, applying it to
@@ -2413,10 +2413,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
       receipt outside it is invalid, a window that cannot be applied is
       undecidable, and with no window a verifier reports the key's
       validity at issuance as not established rather than as valid.  The
-      window applies to the issued_at member of the signed bytes.  An
-      envelope whose payload lacks issued_at is invalid; an issued_at
-      that is not a valid timestamp, or a flat receipt without one,
-      leaves the window unapplied and the outcome undecidable.  The
+      window applies to the issued_at member of the signed bytes.  A
+      signed issued_at that is absent or not a valid timestamp leaves
+      the window unapplied and the outcome undecidable.  The
       verification process gains a step for it, Section 5.3 lists the
       new invalid and undecidable causes, and Section 6.10 lists the
       corresponding vectors.
@@ -2455,6 +2454,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
       suite's CI.  In the commitment-mode minimum set, the algorithm-
       mixed chain (Ed25519 followed by ML-DSA-65) is now marked planned,
       where -03 said it MUST verify; the rest of that set is unchanged.
+
 
 
 

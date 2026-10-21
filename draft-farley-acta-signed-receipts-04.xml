@@ -630,11 +630,11 @@ member, including as <tt>null</tt> or the empty string
 verifies; the receipt was issued outside its key's validity window; a digest
 does not match; a chain link is malformed or a receipt does not follow the
 receipt it is checked against (<xref target="chain-hash-scope"/>); or, in
-the envelope shape, the payload lacks <tt>type</tt>, <tt>issued_at</tt> or
-<tt>issuer_id</tt>, or <tt>issuer_id</tt> differs from
-<tt>signature.kid</tt>. An invalid receipt MUST be rejected. Conformance of
-the payload to its declared type is reported separately and does not change
-the outcome.</t></dd>
+the envelope shape, the payload carries an <tt>issuer_id</tt> that differs
+from <tt>signature.kid</tt>. An invalid receipt MUST be rejected. A payload
+that lacks a member <xref target="payload"/> requires, or that does not
+conform to its declared type, is reported separately and does not change the
+outcome.</t></dd>
           <dt>undecidable:</dt>
           <dd><t>The check could not run. No verification key was available
 from a trust anchor outside the receipt (including the case where the
@@ -723,10 +723,8 @@ apply it to the <tt>issued_at</tt> member of the signed bytes:</t>
 <xref target="verification-outcomes"/>.</t></li>
           <li><t>If the window cannot be applied, because a bound is not a
 valid timestamp, <tt>valid_until</tt> is not after <tt>valid_from</tt>, or
-the signed <tt>issued_at</tt> is not a valid timestamp (or, in the flat
-shape, is absent), the outcome is undecidable and names that cause. An
-envelope whose payload lacks <tt>issued_at</tt> is invalid instead, as
-<xref target="verification-outcomes"/> says.</t></li>
+the signed <tt>issued_at</tt> is absent or not a valid timestamp, the
+outcome is undecidable and names that cause.</t></li>
         </ul>
         <t>When the key source provides no window, the verifier cannot establish
 whether the key was valid when the receipt was issued. It
@@ -2231,10 +2229,10 @@ undecidable only if none failed and one could not run. Step 7 of the
 verification process refers to it. Among the causes of an invalid outcome are a
 carried key that differs from the trust-anchored key; a <tt>signature</tt>
 member in the object canonicalized, whether or not the signature verifies; and,
-in the envelope shape, a payload without <tt>type</tt>, <tt>issued_at</tt> or
-<tt>issuer_id</tt>, or whose <tt>issuer_id</tt> differs from
-<tt>signature.kid</tt>. Conformance of the payload to its declared type is
-reported separately and does not change the outcome.</t></li>
+in the envelope shape, a payload whose <tt>issuer_id</tt> differs from
+<tt>signature.kid</tt>. A payload that lacks a member Section 2.2 requires, or
+that does not conform to its declared type, is reported separately and does not
+change the outcome.</t></li>
         <li><t>Section 5.5 (new): key validity windows. When the key source
 gives a key a <tt>valid_from</tt> / <tt>valid_until</tt> window, applying it
 to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
@@ -2242,10 +2240,9 @@ to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
 <tt>exp</tt>. A receipt outside it is invalid, a window that cannot be
 applied is undecidable, and with no window a verifier reports the key's
 validity at issuance as not established rather than as valid. The window
-applies to the <tt>issued_at</tt> member of the signed bytes. An envelope whose
-payload lacks <tt>issued_at</tt> is invalid; an <tt>issued_at</tt> that is not a
-valid timestamp, or a flat receipt without one, leaves the window unapplied and
-the outcome undecidable. The verification process gains a step for it, Section 5.3 lists the new invalid
+applies to the <tt>issued_at</tt> member of the signed bytes. A signed
+<tt>issued_at</tt> that is absent or not a valid timestamp leaves the window
+unapplied and the outcome undecidable. The verification process gains a step for it, Section 5.3 lists the new invalid
 and undecidable causes, and Section 6.10 lists the corresponding
 vectors.</t></li>
         <li><t>Section 6.7, and Section 6.7.1 (new): how a verifier treats
