@@ -1139,8 +1139,33 @@ receipts are then checked, one at a time, against the published JSON
 Schema for the two shapes of <xref target="signature-scope"/>, with the
 reference verifier under a trust-anchored key, and for chain order, link
 integrity, and the decision each fixture expects. At the time of this
-revision three independent implementations, in TypeScript, Python, and a
-Python gateway hook, pass the suite. The suite exercises:</t>
+revision, four implementations pass the shared suite
+(ScopeBlind/agent-governance-testvectors) in CI: protect-mcp (TypeScript,
+maintained by this document's author) and three independently maintained
+Python implementations: nobulex, the APS governance hook and
+cryptovalid-opencore (<xref target="impl-nobulex"/>,
+<xref target="impl-aps-governance-hook"/> and
+<xref target="impl-cryptovalid-opencore"/>). The suite's CI also replays
+argentum-core's farley-receipt-signature vectors and the 25 vectors of the
+agent-evidence-vectors receipt-signature corpus against the reference
+verifier.</t>
+        <t>Other work builds on this document or checks receipts in its
+format. This document records no interoperability result for it beyond the
+suite's CI. <xref target="ASQAV-COMPLIANCE"/> builds a compliance profile on
+this document's receipt model, with its own conformance rules, and treats this
+document as an informative antecedent; the asqav SDK implements that profile,
+and its service signs receipts with ML-DSA-65 (<xref target="impl-asqav"/>). The EMILIA protocol
+has a runnable example that checks <tt>protectmcp:decision</tt> receipts under
+a pinned issuer key and composes them with its own receipts
+(<xref target="impl-emilia"/>). Verifiers and test sets maintained outside the
+suite include TRACE's Acta verifier, whose fixtures this document's author
+contributed (<xref target="impl-trace"/>); the agent-evidence-vectors
+receipt-signature corpus (<xref target="impl-agent-evidence-vectors"/>);
+argentum-core's farley-receipt-signature vectors
+(<xref target="impl-argentum-core"/>); and receipt-verify, a TypeScript
+verifier whose tests include published Acta receipts
+(<xref target="impl-receipt-verify"/>).</t>
+        <t>The suite exercises:</t>
         <ul>
           <li><t>Both receipt shapes of <xref target="signature-scope"/>,
 each with its own signing-input rule.</t></li>
@@ -1580,6 +1605,27 @@ before parsing it.</t>
           <seriesInfo name="RFC" value="9901"/>
           <seriesInfo name="DOI" value="10.17487/RFC9901"/>
         </reference>
+        <reference anchor="RFC7942" target="https://www.rfc-editor.org/info/rfc7942">
+          <front>
+            <title>Improving Awareness of Running Code: The Implementation Status Section</title>
+            <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="A. Farrel" initials="A." surname="Farrel"/>
+            <date month="July" year="2016"/>
+          </front>
+          <seriesInfo name="BCP" value="205"/>
+          <seriesInfo name="RFC" value="7942"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7942"/>
+        </reference>
+        <reference anchor="ASQAV-COMPLIANCE" target="https://datatracker.ietf.org/doc/draft-marques-asqav-compliance-receipts/09/">
+          <front>
+            <title>Compliance Profile of Signed Action Receipts for AI Agents</title>
+            <author fullname="J. A. Gomes Marques" initials="J. A." surname="Gomes Marques">
+              <organization>Asqav</organization>
+            </author>
+            <date day="21" month="September" year="2026"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-marques-asqav-compliance-receipts-09"/>
+        </reference>
 
         <reference anchor="MCP" target="https://modelcontextprotocol.io/specification">
           <front>
@@ -1631,12 +1677,23 @@ before parsing it.</t>
 <section anchor="implementation-status">
       <name>Implementation Status</name>
       <t>This section records the status of known implementations of the
-protocol defined by this specification at the time of publication.</t>
+protocol defined by this specification at the time of posting of this
+Internet-Draft, and is based on a proposal described in
+<xref target="RFC7942"/>. The description of implementations in this section
+is intended to assist the IETF in its decision processes in progressing drafts
+to RFCs. Please note that the listing of any individual implementation here
+does not imply endorsement by the IETF. Furthermore, no effort has been spent
+to verify the information presented here that was supplied by IETF
+contributors. This is not intended as, and must not be construed to be, a
+catalog of available implementations or their features. Readers are advised
+to note that other implementations may exist.</t>
+      <t>Note to the RFC Editor: please remove this section, and the reference
+to <xref target="RFC7942"/>, before publication.</t>
       <section anchor="protect-mcp-reference-implementation">
         <name>protect-mcp (Reference Implementation)</name>
         <ul spacing="normal">
           <li>
-            <t>Organization: ScopeBlind</t>
+            <t>Organization: ScopeBlind, maintained by this document's author.</t>
           </li>
           <li>
             <t>Implementation: https://www.npmjs.com/package/protect-mcp</t>
@@ -1663,7 +1720,7 @@ Lifecycle Receipts, Spending Authority Receipts.</t>
         <name>@veritasacta/verify (Verifier)</name>
         <ul spacing="normal">
           <li>
-            <t>Organization: Veritas Acta</t>
+            <t>Organization: Veritas Acta, maintained by this document's author.</t>
           </li>
           <li>
             <t>Implementation: https://www.npmjs.com/package/@veritasacta/verify</t>
@@ -1673,10 +1730,10 @@ Lifecycle Receipts, Spending Authority Receipts.</t>
 verification. Zero runtime dependencies on ScopeBlind.</t>
           </li>
           <li>
-            <t>Coverage: All receipt types defined in this specification.</t>
+            <t>Licensing: Apache-2.0.</t>
           </li>
           <li>
-            <t>Licensing: Apache-2.0.</t>
+            <t>Version: 0.10.26; 0.10.27 is in preparation.</t>
           </li>
         </ul>
       </section>
@@ -1879,6 +1936,207 @@ Working proof-of-concept submitted (issue #2798).</t>
             <t>Notes: Uses DSSE envelope with payloadType
 "application/vnd.scopeblind.receipt+json". Ed25519ph (prehash
 variant) required for the alternative hashedrekord entry type.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-nobulex">
+        <name>nobulex (Conformance Driver)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Maintainer: arian-gogani.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/ScopeBlind/agent-governance-testvectors/tree/main/implementations/nobulex, the conformance driver added in pull request #12 of that suite.</t>
+          </li>
+          <li>
+            <t>Language: Python.</t>
+          </li>
+          <li>
+            <t>Description: Emits one signed receipt per fixture of the shared suite. Its README names the shape decision_receipt: Ed25519 over the JCS bytes of the receipt with its signature member removed, a kid that is an RFC 7638 thumbprint, and no key carried in the receipt.</t>
+          </li>
+          <li>
+            <t>Coverage: Passes the shared suite's checks in CI: the schema, every signature under the supplied key, and the chain and expected decisions.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0, as part of the suite.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-aps-governance-hook">
+        <name>APS Governance Hook (Conformance Driver)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Organization: Agent Passport System, maintained by aeoess.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/ScopeBlind/agent-governance-testvectors/tree/main/implementations/aps-governance-hook, the conformance driver added in pull request #1 of that suite. It signs with the Agent Passport System Python SDK, https://github.com/agent-passport-system/agent-passport-python.</t>
+          </li>
+          <li>
+            <t>Language: Python.</t>
+          </li>
+          <li>
+            <t>Description: Evaluates each fixture with Cedar through cedarpy and emits receipts signed with Ed25519, using the Agent Passport System SDK for JCS and signing. The driver calls the shape an ACTA v2 decision_receipt. The verifier takes the key by kid from a separate JWK Set; no key is carried in the receipt.</t>
+          </li>
+          <li>
+            <t>Coverage: Passes the shared suite's checks in CI.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-cryptovalid-opencore">
+        <name>cryptovalid-opencore (Emitter and Verifier)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Maintainer: robertolocatelli81-dev.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/robertolocatelli81-dev/cryptovalid-opencore. The shared suite's driver for it was added in pull request #25 of that suite.</t>
+          </li>
+          <li>
+            <t>Language: Python.</t>
+          </li>
+          <li>
+            <t>Description: Emits and verifies receipts in the envelope shape (cryptovalid_acta.py), written against revision -03: PureEdDSA over JCS(payload), chain links over the whole signed receipt (<xref target="chain-hash-scope"/>), and the policy digest recomputed from the policy bytes (<xref target="policy-digest-construction"/>).</t>
+          </li>
+          <li>
+            <t>Coverage: Passes the shared suite's checks in CI.</t>
+          </li>
+          <li>
+            <t>Licensing: AGPL-3.0.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-asqav">
+        <name>asqav SDK (Compliance Receipt Profile)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Maintainer: jagmarques (Asqav).</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/jagmarques/asqav-sdk.</t>
+          </li>
+          <li>
+            <t>Language: Python and TypeScript.</t>
+          </li>
+          <li>
+            <t>Description: SDKs for the Compliance Receipts of <xref target="ASQAV-COMPLIANCE"/>, a profile built on this document's receipt model with its own conformance rules. Its README says that receipts issued by its service are signed with ML-DSA-65, and locally signed ones with Ed25519 or ES256. Its ACTA adapter verifies receipts in this document's envelope shape under Ed25519, written against revision -02.</t>
+          </li>
+          <li>
+            <t>Coverage: Compliance Receipts, which it emits and verifies; receipts in this document's envelope shape, which it verifies under Ed25519 only.</t>
+          </li>
+          <li>
+            <t>Licensing: Elastic License 2.0 for the client SDKs; Apache-2.0 for the verifier and conformance vectors.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-emilia">
+        <name>EMILIA Protocol (Acta Example)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Organization: emiliaprotocol (GitHub organization).</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/emiliaprotocol/emilia-protocol, examples/acta-ep-join.</t>
+          </li>
+          <li>
+            <t>Language: TypeScript.</t>
+          </li>
+          <li>
+            <t>Description: A runnable example that checks protectmcp:decision receipts under an issuer key pinned for the decision role, and composes them with EMILIA's own receipts (EP-RECEIPT-v1) for the same action. Its README calls it a non-normative interoperability profile against revision -02 that supports the Ed25519 path only.</t>
+          </li>
+          <li>
+            <t>Coverage: Access Decision Receipts in the envelope shape, Ed25519 only. Its README says it refuses an envelope that carries its own verification key.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-trace">
+        <name>TRACE (Acta Verifier)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Organization: agentrust-io (trace-spec); the verifier is by astrogilda.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/agentrust-io/trace-spec, tools/acta_receipt_verifier.py, with fixtures in examples/action-receipts/acta.</t>
+          </li>
+          <li>
+            <t>Language: Python.</t>
+          </li>
+          <li>
+            <t>Description: Verifies receipts in this document's envelope shape: the refusal of a signature member (<xref target="signature-scope"/>), Ed25519 over JCS(payload) under a key from an external JWK Set, key validity windows, and chain links. It was added in trace-spec pull request #469 and graded against revision -03. Its 11 protectmcp:decision fixtures were contributed by this document's author.</t>
+          </li>
+          <li>
+            <t>Coverage: Envelope-shape receipts signed with Ed25519.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0 for code and examples; the specification text is under the Community Specification License 1.0.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-agent-evidence-vectors">
+        <name>agent-evidence-vectors (Receipt-Signature Corpus)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Organization: probityai, maintained by astrogilda.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/probityai/agent-evidence-vectors, the receipt-signature corpus.</t>
+          </li>
+          <li>
+            <t>Language: Python.</t>
+          </li>
+          <li>
+            <t>Description: Conformance corpora and reference verifiers for agent evidence formats. Its receipt-signature corpus holds 25 vectors for this document, tracking revision -03, and the shared suite's CI replays it against the reference verifier.</t>
+          </li>
+          <li>
+            <t>Coverage: The signing input, key validity windows and chain links.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-argentum-core">
+        <name>argentum-core (Receipt-Signature Vectors)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Maintainer: giskard09.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/giskard09/argentum-core, examples/conformance/farley-receipt-signature.</t>
+          </li>
+          <li>
+            <t>Language: Python.</t>
+          </li>
+          <li>
+            <t>Description: Four vectors for receipts in this document's envelope shape: two cases, each with a conformant twin. One signs bytes that are not the JCS form, and the other uses a key after its valid_until. A reference verifier is included. The shared suite's CI runs the vectors against the reference verifier.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0.</t>
+          </li>
+        </ul>
+      </section>
+      <section anchor="impl-receipt-verify">
+        <name>receipt-verify (Verifier)</name>
+        <ul spacing="normal">
+          <li>
+            <t>Maintainer: LembaGang.</t>
+          </li>
+          <li>
+            <t>Implementation: https://github.com/LembaGang/receipt-verify (npm package @headlessoracle/receipt-verify).</t>
+          </li>
+          <li>
+            <t>Language: TypeScript.</t>
+          </li>
+          <li>
+            <t>Description: A cross-format verifier that returns one of three verdicts per receipt. Its Acta adapter follows revision -02: it takes the envelope's signing input to be the receipt without its signature member, not JCS(payload) as <xref target="signature-scope"/> now specifies. It verifies EdDSA and ES256, reports ML-DSA-65 as unverifiable, and implements commitment mode. Its tests include published Acta receipts.</t>
+          </li>
+          <li>
+            <t>Licensing: Apache-2.0.</t>
           </li>
         </ul>
       </section>
