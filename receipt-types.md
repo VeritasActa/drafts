@@ -103,9 +103,9 @@ Fields:
 - Status: registered, informative; first published in
   draft-farley-acta-signed-receipts-01
 
-Records the outcome of an issuer-blind spending authorization check. Proves
-that an agent's purchase is within authorized limits without revealing
-organizational identity, budget ceiling, or delegation chain.
+Records the outcome of a spending authorization check. Proves that an agent's
+purchase is within authorized limits without revealing the budget ceiling or
+delegation chain.
 
 ```json
 {
@@ -136,9 +136,10 @@ Fields:
 The receipt deliberately EXCLUDES: organization name, total budget ceiling,
 exact remaining budget, agent identity, and delegation chain.
 
-One sentence of the draft's text, about verification with VOPRF, is not
-carried over: the receipt names its issuer in `issuer_id` and is checked under
-that issuer's key.
+Three parts of the draft's text are not carried over: a sentence about
+verification with VOPRF, and the description's "issuer-blind" and "without
+revealing organizational identity". The receipt names its issuer in
+`issuer_id` and is checked under that issuer's key.
 
 ## Formal Debate Receipt
 

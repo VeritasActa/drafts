@@ -31,7 +31,8 @@ Defines a portable, cryptographically signed receipt format for recording machin
 
 - **Status**: Active, Individual Submission
 - **Datatracker**: [draft-farley-acta-signed-receipts](https://datatracker.ietf.org/doc/draft-farley-acta-signed-receipts/)
-- **Current revision**: -03
+- **Current revision**: -04 (editor's copy, not yet submitted)
+- **Companion files**: [receipt-types.md](receipt-types.md), an informative registry of receipt types, and [agent-manifest.md](agent-manifest.md), an informative note on the agent manifest
 - **Verifier**: [current release and verification guide](https://github.com/VeritasActa/verify) (Apache-2.0; local receipt/key verification runs offline after installation)
 
 ### draft-farley-acta-knowledge-units

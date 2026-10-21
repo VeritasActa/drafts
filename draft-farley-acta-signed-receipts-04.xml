@@ -26,7 +26,7 @@
     <keyword>access-control</keyword>
     <keyword>AI agents</keyword>
     <abstract>
-<t>This document defines a portable, cryptographically signed receipt
+      <t>This document defines a portable, cryptographically signed receipt
 format for recording machine-to-machine access control decisions.
 Each receipt captures the identity of the decision maker, the tool
 or resource being accessed, the policy evaluation result, and a
@@ -40,7 +40,7 @@ and cross-organizational trust federation.</t>
     </abstract>
   </front>
   <middle>
-<section anchor="introduction">
+    <section anchor="introduction">
       <name>Introduction</name>
       <t>As AI agents increasingly act autonomously (invoking tools, accessing
 APIs, and modifying state), there is a growing need for cryptographic
@@ -340,13 +340,15 @@ itself.</t>
             <dt>agent_manifest_version (OPTIONAL):</dt>
             <dd>
               <t>The semantic version of the agent's manifest at the time of
-the decision.</t>
+the decision. Agent manifests are described in <tt>agent-manifest.md</tt>, an
+informative note kept with this document at
+<eref target="https://github.com/VeritasActa/drafts/blob/main/agent-manifest.md"/>.</t>
             </dd>
             <dt>agent_tier (OPTIONAL):</dt>
             <dd>
               <t>The trust tier of the requesting agent at the time of the
-decision. One of: <tt>"unknown"</tt>, <tt>"signed-known"</tt>,
-<tt>"privileged"</tt>.</t>
+decision. Tiers are named and defined by the policy; this document defines
+none.</t>
             </dd>
             <dt>required_tier (OPTIONAL):</dt>
             <dd>
@@ -686,8 +688,8 @@ GET /.well-known/acta-keys.json
         <t>The <tt>x</tt> parameter MUST be the base64url-encoded Ed25519 public key
 as specified in <xref target="RFC8037"/>.</t>
         <t>For offline verification, public keys MAY be distributed out-of-band
-(e.g., embedded in configuration files, published in DNS TXT records,
-or included in agent manifests).</t>
+(e.g., embedded in configuration files or published in DNS TXT
+records).</t>
       </section>
       <section anchor="key-validity-windows">
         <name>Key Validity Windows</name>
@@ -721,8 +723,10 @@ apply it to the <tt>issued_at</tt> member of the signed bytes:</t>
 <xref target="verification-outcomes"/>.</t></li>
           <li><t>If the window cannot be applied, because a bound is not a
 valid timestamp, <tt>valid_until</tt> is not after <tt>valid_from</tt>, or
-the receipt carries no valid <tt>issued_at</tt>, the outcome is undecidable
-and names that cause.</t></li>
+the signed <tt>issued_at</tt> is not a valid timestamp (or, in the flat
+shape, is absent), the outcome is undecidable and names that cause. An
+envelope whose payload lacks <tt>issued_at</tt> is invalid instead, as
+<xref target="verification-outcomes"/> says.</t></li>
         </ul>
         <t>When the key source provides no window, the verifier cannot establish
 whether the key was valid when the receipt was issued. It
@@ -1110,8 +1114,7 @@ Mandatory-to-implement (MTI) baseline.</t></li>
           <li><t><tt>ML-DSA-65</tt> <xref target="RFC9964"/> <bcp14>MAY</bcp14> be
 used. A verifier that does not implement it reports undecidable.</t></li>
           <li><t><tt>ES256</tt> (ECDSA over P-256, <xref target="RFC7518"/>): Permitted for
-compatibility with existing credentials, particularly those used in
-<xref target="I-D.google-cfrg-libzk"/> ZK proof composition.</t></li>
+compatibility with existing credentials.</t></li>
         </ul>
         <t>The <tt>signature</tt> object MUST contain an
 <tt>alg</tt> field carrying the algorithm name as a string. Verifiers
@@ -1645,15 +1648,6 @@ before parsing it.</t>
             <date year="2026"/>
           </front>
         </reference>
-        <reference anchor="I-D.google-cfrg-libzk" target="https://datatracker.ietf.org/doc/draft-google-cfrg-libzk/">
-          <front>
-            <title>The libzk Library for Zero-Knowledge Proofs of Predicates over Existing Credentials</title>
-            <author>
-              <organization>Google</organization>
-            </author>
-            <date year="2026"/>
-          </front>
-        </reference>
         <reference anchor="I-D.verify-reference" target="https://www.npmjs.com/package/@veritasacta/verify">
           <front>
             <title>Veritas Acta Reference Verifier (@veritasacta/verify)</title>
@@ -1674,7 +1668,7 @@ before parsing it.</t>
         </reference>
       </references>
     </references>
-<section anchor="implementation-status">
+    <section anchor="implementation-status">
       <name>Implementation Status</name>
       <t>This section records the status of known implementations of the
 protocol defined by this specification at the time of posting of this
@@ -1705,8 +1699,7 @@ Code hook integration. Supports stdio proxy mode, HTTP hook
 server mode, shadow mode (log-only), and enforce mode.</t>
           </li>
           <li>
-            <t>Coverage: Access Decision Receipts, Restraint Receipts, Agent
-Lifecycle Receipts, Spending Authority Receipts.</t>
+            <t>Coverage: Access Decision Receipts.</t>
           </li>
           <li>
             <t>Licensing: MIT.</t>
@@ -1747,11 +1740,11 @@ verification. Zero runtime dependencies on ScopeBlind.</t>
             <t>Implementation: https://www.npmjs.com/package/@scopeblind/passport</t>
           </li>
           <li>
-            <t>Description: Agent identity SDK for generating manifests, signing
-receipts, and managing trust tier evidence bundles.</t>
+            <t>Description: Agent identity SDK for generating manifests and signing
+receipts.</t>
           </li>
           <li>
-            <t>Coverage: All receipt types, manifest signing, key management.</t>
+            <t>Coverage: Receipt and manifest signing, key management.</t>
           </li>
           <li>
             <t>Licensing: Apache-2.0.</t>
@@ -2160,12 +2153,16 @@ const issuer = generateIssuerKey();
 console.log(issuer.issuerId);
 console.log(issuer.publicKeyHex);
 // One run printed:
-// sb:issuer:DmbZUdVCrrN8
-// bdb8e031e30d12e43317adaf12933c662161ef0fd48127b8688d9e60bc943e89
+// sb:issuer:J8VYDXBJYPVN
+// fe8202fc4d97922b487d71610890d69a2bebc6922431e5e677c9f3b1a74db650
 ]]></artwork>
       </section>
       <section anchor="step-2-sign-a-receipt">
         <name>Step 2: Sign a Receipt</name>
+        <t>The <tt>policy_digest</tt> below is the acta-policy-digest-v1
+digest (<xref target="policy-digest-construction"/>) of one Cedar file,
+<tt>policy.cedar</tt>, holding <tt>permit(principal, action, resource);</tt>
+and a newline.</t>
         <artwork><![CDATA[
 import { signReceipt } from '@scopeblind/passport';
 import { writeFileSync } from 'node:fs';
@@ -2176,7 +2173,9 @@ const receipt = signReceipt(
     tool_name: "deploy",
     decision: "allow",
     agent_tier: "privileged",
-    policy_digest: "sha256:a8f3...c91e",
+    policy_digest: "sha256:" +
+      "ba145cbc4d96bea7c7590e4f24295925" +
+      "6b59b0075163bab6f53f4b300957c7ba",
     issued_at: "2026-03-22T14:32:06.551Z",
     issuer_id: issuer.issuerId
   },
@@ -2212,7 +2211,7 @@ $ npx @veritasacta/verify receipt.json --key <64-hex> --json
   "connectorAction": null,
   "format": "passport",
   "type": "protectmcp:decision",
-  "kid": "sb:issuer:DmbZUdVCrrN8",
+  "kid": "sb:issuer:J8VYDXBJYPVN",
   "issuer": null,
   "keySource": "provided",
   ...
@@ -2229,15 +2228,24 @@ consumable output, an undecidable outcome names its cause, and a gate
 treats it as a failure to verify rather than as tampering or as a pass.
 When several checks run, the verification is invalid if any failed, and
 undecidable only if none failed and one could not run. Step 7 of the
-verification process refers to it.</t></li>
+verification process refers to it. Among the causes of an invalid outcome are a
+carried key that differs from the trust-anchored key; a <tt>signature</tt>
+member in the object canonicalized, whether or not the signature verifies; and,
+in the envelope shape, a payload without <tt>type</tt>, <tt>issued_at</tt> or
+<tt>issuer_id</tt>, or whose <tt>issuer_id</tt> differs from
+<tt>signature.kid</tt>. Conformance of the payload to its declared type is
+reported separately and does not change the outcome.</t></li>
         <li><t>Section 5.5 (new): key validity windows. When the key source
 gives a key a <tt>valid_from</tt> / <tt>valid_until</tt> window, applying it
 to <tt>issued_at</tt> is required (-03 said SHOULD). The window includes
 <tt>valid_from</tt> and excludes <tt>valid_until</tt>, as RFC 7519 treats
 <tt>exp</tt>. A receipt outside it is invalid, a window that cannot be
 applied is undecidable, and with no window a verifier reports the key's
-validity at issuance as not established rather than as valid. The
-verification process gains a step for it, Section 5.3 lists the new invalid
+validity at issuance as not established rather than as valid. The window
+applies to the <tt>issued_at</tt> member of the signed bytes. An envelope whose
+payload lacks <tt>issued_at</tt> is invalid; an <tt>issued_at</tt> that is not a
+valid timestamp, or a flat receipt without one, leaves the window unapplied and
+the outcome undecidable. The verification process gains a step for it, Section 5.3 lists the new invalid
 and undecidable causes, and Section 6.10 lists the corresponding
 vectors.</t></li>
         <li><t>Section 6.7, and Section 6.7.1 (new): how a verifier treats
@@ -2263,8 +2271,42 @@ lists the corresponding vectors.</t></li>
         <li><t>Section 6.10: the interoperability suite is named, what it
 checks is listed (both shapes, the chain hash rule, the policy digest
 rule, the three outcomes for a key carried inside the signed bytes, the
-evidence predicate), and three independent implementations are recorded
-as passing it. The commitment-mode minimum set is unchanged.</t></li>
+evidence predicate), and four implementations are recorded as passing it in
+CI: protect-mcp, maintained by this document's author, and three independently
+maintained Python implementations. Other work that builds on or checks the
+format is listed, with no interoperability result claimed beyond the suite's
+CI. In the commitment-mode minimum set, the algorithm-mixed chain (Ed25519
+followed by ML-DSA-65) is now marked planned, where -03 said it MUST verify;
+the rest of that set is unchanged.</t></li>
+        <li><t>Section 6.9: ML-DSA-65 <xref target="RFC9964"/> may be used, and a
+verifier that does not implement it reports undecidable; -03 recommended it for
+new deployments. RFC 7518 is cited for ES256 only, and the ES256 entry no longer
+refers to a draft on zero-knowledge proofs.</t></li>
+        <li><t>Section 7.5: a carried key is the value of a <tt>public_key</tt>,
+<tt>verification_key</tt> or <tt>verification_jwk</tt> member of the signed
+bytes of a receipt. A verifier never verifies with one, and a receipt that
+carries a key other than the trust-anchored key is invalid. Revision -03 also
+covered "any equivalent name"; other names are now advice only. A key delivered in the
+same file, bundle or message as the receipt is not out of band.</t></li>
+        <li><t>The document now defines one receipt type. The Arena Battle,
+Spending Authority and Formal Debate receipts, the context binding for
+zero-knowledge proofs, the trust tiers and the agent identity section are
+removed. The Agent Lifecycle, Arena Battle and Spending Authority types, and
+Formal Debate with its fields not yet defined, are listed in
+<tt>receipt-types.md</tt>, an informative registry kept with this document,
+and the agent manifest is described in <tt>agent-manifest.md</tt>, with its key
+member renamed <tt>agent_public_key</tt>. The Restraint Receipt is folded into
+the Access Decision Receipt: <tt>reason</tt>, spelled <tt>"policy_block"</tt>
+and <tt>"agent_refusal"</tt>, replaces its <tt>denial_type</tt>, and
+<tt>agent_id</tt> and <tt>agent_manifest_version</tt> become OPTIONAL fields.
+The <tt>agent_tier</tt> field no longer lists tier values, and Section 5.4 no longer lists
+agent manifests as a key source. Test Vectors is now Section 6.10, Security
+Considerations Section 7 and IANA Considerations Section 8.</t></li>
+        <li><t>Appendix A follows <xref target="RFC7942"/>, marks the
+implementations maintained by this document's author, updates their versions,
+and adds entries A.12 to A.20. Appendix B runs as written, shows output from a
+real run, and carries a policy digest computed as Section 6.8 specifies.</t></li>
+        <li><t>The XML source no longer embeds the markdown source of -02.</t></li>
       </ul>
     </section>
     <section anchor="changes-from-02">
