@@ -1908,7 +1908,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
    *  Licensing: Apache-2.0.
 
-   *  Version: 0.10.26; 0.10.27 is in preparation.
+   *  Version: 0.10.27.
 
 A.3.  @scopeblind/passport (Identity SDK)
 
@@ -2299,7 +2299,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
 
 
    Step 1 prints.  The output shown came from @scopeblind/passport 0.4.3
-   and @veritasacta/verify 0.10.26.  Each run generates a new key, so
+   and @veritasacta/verify 0.10.27.  Each run generates a new key, so
    the identifiers will differ.
 
 B.1.  Step 1: Generate Issuer Keys
@@ -2309,8 +2309,8 @@ B.1.  Step 1: Generate Issuer Keys
    console.log(issuer.issuerId);
    console.log(issuer.publicKeyHex);
    // One run printed:
-   // sb:issuer:J8VYDXBJYPVN
-   // fe8202fc4d97922b487d71610890d69a2bebc6922431e5e677c9f3b1a74db650
+   // sb:issuer:BrmdDbomqHgK
+   // a154c931eb9b746c8d3b07dcca39bc3680ecc0dc5cc2d5e385522954a1f0ab0c
 
 B.2.  Step 2: Sign a Receipt
 
@@ -2365,6 +2365,9 @@ Internet-Draft            Acta Signed Receipts              October 2026
        "signature": {
          "result": "pass"
        },
+       "issuer_kid": {
+         "result": "pass"
+       },
        "chain_link": {
          "result": "absent"
        },
@@ -2375,7 +2378,7 @@ Internet-Draft            Acta Signed Receipts              October 2026
      "connectorAction": null,
      "format": "passport",
      "type": "protectmcp:decision",
-     "kid": "sb:issuer:J8VYDXBJYPVN",
+     "kid": "sb:issuer:BrmdDbomqHgK",
      "issuer": null,
      "keySource": "provided",
      ...
@@ -2398,10 +2401,7 @@ Appendix C.  Changes from -03
       requires, or that does not conform to its declared type, is
       reported separately and does not change the outcome.
 
-   *  Section 5.5 (new): key validity windows.  When the key source
-      gives a key a valid_from / valid_until window, applying it to
-      issued_at is required (-03 said SHOULD).  The window includes
-      valid_from and excludes valid_until, as RFC 7519 treats exp.  A
+
 
 
 
@@ -2410,6 +2410,10 @@ Farley                    Expires 22 April 2027                [Page 43]
 Internet-Draft            Acta Signed Receipts              October 2026
 
 
+   *  Section 5.5 (new): key validity windows.  When the key source
+      gives a key a valid_from / valid_until window, applying it to
+      issued_at is required (-03 said SHOULD).  The window includes
+      valid_from and excludes valid_until, as RFC 7519 treats exp.  A
       receipt outside it is invalid, a window that cannot be applied is
       undecidable, and with no window a verifier reports the key's
       validity at issuance as not established rather than as valid.  The
@@ -2454,10 +2458,6 @@ Internet-Draft            Acta Signed Receipts              October 2026
       suite's CI.  In the commitment-mode minimum set, the algorithm-
       mixed chain (Ed25519 followed by ML-DSA-65) is now marked planned,
       where -03 said it MUST verify; the rest of that set is unchanged.
-
-
-
-
 
 
 

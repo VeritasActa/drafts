@@ -1724,7 +1724,7 @@ verification. Zero runtime dependencies on ScopeBlind.</t>
             <t>Licensing: Apache-2.0.</t>
           </li>
           <li>
-            <t>Version: 0.10.26; 0.10.27 is in preparation.</t>
+            <t>Version: 0.10.27.</t>
           </li>
         </ul>
       </section>
@@ -2141,7 +2141,7 @@ verification.</t>
 <tt>npm install @scopeblind/passport</tt>. Step 2 writes
 <tt>receipt.json</tt>, and Step 3 verifies it with the public key that Step 1
 prints. The output shown came from <tt>@scopeblind/passport</tt> 0.4.3 and
-<tt>@veritasacta/verify</tt> 0.10.26. Each run generates a new key, so the
+<tt>@veritasacta/verify</tt> 0.10.27. Each run generates a new key, so the
 identifiers will differ.</t>
       <section anchor="step-1-generate-issuer-keys">
         <name>Step 1: Generate Issuer Keys</name>
@@ -2151,8 +2151,8 @@ const issuer = generateIssuerKey();
 console.log(issuer.issuerId);
 console.log(issuer.publicKeyHex);
 // One run printed:
-// sb:issuer:J8VYDXBJYPVN
-// fe8202fc4d97922b487d71610890d69a2bebc6922431e5e677c9f3b1a74db650
+// sb:issuer:BrmdDbomqHgK
+// a154c931eb9b746c8d3b07dcca39bc3680ecc0dc5cc2d5e385522954a1f0ab0c
 ]]></artwork>
       </section>
       <section anchor="step-2-sign-a-receipt">
@@ -2199,6 +2199,9 @@ $ npx @veritasacta/verify receipt.json --key <64-hex> --json
     "signature": {
       "result": "pass"
     },
+    "issuer_kid": {
+      "result": "pass"
+    },
     "chain_link": {
       "result": "absent"
     },
@@ -2209,7 +2212,7 @@ $ npx @veritasacta/verify receipt.json --key <64-hex> --json
   "connectorAction": null,
   "format": "passport",
   "type": "protectmcp:decision",
-  "kid": "sb:issuer:J8VYDXBJYPVN",
+  "kid": "sb:issuer:BrmdDbomqHgK",
   "issuer": null,
   "keySource": "provided",
   ...
