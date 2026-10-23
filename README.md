@@ -35,6 +35,16 @@ Defines a portable, cryptographically signed receipt format for recording machin
 - **Companion files**: [receipt-types.md](receipt-types.md), an informative registry of receipt types, and [agent-manifest.md](agent-manifest.md), an informative note on the agent manifest
 - **Verifier**: [current release and verification guide](https://github.com/VeritasActa/verify) (Apache-2.0; local receipt/key verification runs offline after installation)
 
+### draft-farley-acta-connector-action
+
+**Connector-Action Profile for Acta Signed Receipts**
+
+Profiles signed receipts for calls an agent makes through a connector platform (Meta Muse, Claude Code, Codex, any MCP client). The platform presents a small signed context with the call: platform, agent, and the grant the person gave. The gate or service that records the receipt writes that context in verbatim, records separately what it could verify about the platform's signature, binds the digest of the call it actually received, and, once it observes the effect, the digest of what the service read back. Presented, checked and verified stay three separate facts, so a verifier with the platform's key never has to take the recorder's word.
+
+- **Status**: Draft, not yet submitted
+- **Current revision**: -00
+- **Reference implementation**: the connector member is emitted by protect-mcp (MCP `_meta["veritasacta.com/connector"]`) and checked by `npx @veritasacta/verify <receipt.json> --platform-key <kid>=<hex>`; seven shared test vectors ship with the gateway
+
 ### draft-farley-acta-knowledge-units
 
 **Knowledge Units for Multi-Model Deliberation**

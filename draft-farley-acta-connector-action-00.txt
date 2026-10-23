@@ -1,0 +1,784 @@
+
+
+
+
+Network Working Group                                          T. Farley
+Internet-Draft                                                ScopeBlind
+Intended status: Informational                         20 September 2026
+Expires: 24 March 2027
+
+
+           Connector-Action Profile for Acta Signed Receipts
+                 draft-farley-acta-connector-action-00
+
+Abstract
+
+   Personal agent platforms let an agent act through connectors: a tool
+   call reaches a service carrying a real credential, while the grant
+   the person gave the agent stays inside the platform.  After the fact,
+   the person, the platform, and the service each hold a different log,
+   and none of them can show a third party what was authorized, what was
+   received, and what happened.
+
+   This document profiles Acta signed receipts for connector actions.  A
+   platform presents, with each tool call, a small context naming the
+   platform, the acting agent, and the grant.  The recorder of the
+   receipt, a gate in front of the service or the service itself, writes
+   that context into the receipt exactly as presented, records
+   separately what it could verify about it, binds the digest of the
+   call it actually received, and, when it observes the effect, the
+   digest of what the service read back.  The receipt stays verifiable
+   offline under the base specification, and a verifier holding the
+   platform's key can test the platform's signature without trusting the
+   recorder.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 24 March 2027.
+
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 1]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   3
+   2.  The Connector Context . . . . . . . . . . . . . . . . . . . .   4
+     2.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . . . .   4
+     2.2.  Signing . . . . . . . . . . . . . . . . . . . . . . . . .   5
+     2.3.  Presentation over the Model Context Protocol  . . . . . .   5
+   3.  The connector Member on a Decision Receipt  . . . . . . . . .   6
+     3.1.  Fields  . . . . . . . . . . . . . . . . . . . . . . . . .   6
+     3.2.  Recorder Rules  . . . . . . . . . . . . . . . . . . . . .   8
+   4.  Verification  . . . . . . . . . . . . . . . . . . . . . . . .   8
+     4.1.  Schema  . . . . . . . . . . . . . . . . . . . . . . . . .   9
+     4.2.  The Platform Signature  . . . . . . . . . . . . . . . . .   9
+     4.3.  Outcomes  . . . . . . . . . . . . . . . . . . . . . . . .   9
+     4.4.  What the Member Proves  . . . . . . . . . . . . . . . . .  10
+   5.  Digest Construction . . . . . . . . . . . . . . . . . . . . .  10
+   6.  Test Vectors  . . . . . . . . . . . . . . . . . . . . . . . .  10
+   7.  Security Considerations . . . . . . . . . . . . . . . . . . .  11
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  12
+   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  12
+     9.1.  Normative References  . . . . . . . . . . . . . . . . . .  12
+     9.2.  Informative References  . . . . . . . . . . . . . . . . .  13
+   Appendix A.  Example Receipt  . . . . . . . . . . . . . . . . . .  13
+   Appendix B.  Acknowledgements . . . . . . . . . . . . . . . . . .  14
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  14
+
+1.  Introduction
+
+   An agent platform that runs personal agents (Meta's Muse, a coding
+   agent such as Claude Code or Codex, any client of the Model Context
+   Protocol) reaches services through connectors.  The platform decides
+   what its agent may do: a grant for one action, a session, a task, a
+   bounded time, or standing permission.  The connected service sees
+   none of that.  It receives an ordinary call with an ordinary
+   credential.
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 2]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+   Three consequences follow.  The service cannot tell a call the person
+   granted from a call the agent invented.  Nobody can later prove to a
+   third party which grant a call was made under.  And when the action
+   is disputed, the person's log, the platform's log, and the service's
+   log disagree about what was sent and what was done.
+
+   The base specification [ACTA] defines signed receipts for tool
+   decisions.  This document adds a profile for connector actions: a
+   context object the platform presents with a call, and a member on the
+   decision receipt in which the recorder writes that context, its own
+   check of it, the digest of the call as received, and the observed
+   effect.  The profile keeps presented facts and verified facts apart.
+   A platform may claim any grant.  Only a signature under a key the
+   recorder or the verifier trusts turns the claim into evidence, and
+   the receipt says which it holds.
+
+   The profile changes nothing about how a receipt is signed or
+   verified.  A verifier that does not implement it ignores the member.
+   A verifier that does implement it applies the rules in Section 4 in
+   addition to those of the base specification.
+
+1.1.  Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in BCP
+   14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+   platform  The system that runs the agent and holds the person's grant
+      to it.
+
+   agent  The software acting for a person through the platform.
+
+   grant  What the person allowed the agent to do, as the platform
+      records it.
+
+   context  The object the platform presents with a call: platform,
+      agent, grant, and optionally the digest of the mandate the grant
+      sits under.
+
+   recorder  The party that issues the decision receipt for the call: a
+      gate in front of the service, or the service itself.
+
+   effect  What the service reports it did, read back after the action.
+
+   verifier  Any party checking the receipt later, with or without keys
+      beyond the recorder's.
+
+
+
+Farley                    Expires 24 March 2027                 [Page 3]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+2.  The Connector Context
+
+   The context is a JSON object the platform builds once per call.  It
+   is either presented bare or wrapped as an Acta envelope and signed by
+   the platform.
+
+2.1.  Fields
+
+   {
+     "type": "acta:connector-context",
+     "platform": "meta.muse",
+     "agent": "agent-e8d36428",
+     "grant": {
+       "type": "task",
+       "id": "grant-42",
+       "purpose": "Prepare the client review of pull request 25",
+       "issued_at": "2026-09-20T05:44:36.339Z",
+       "expires_at": "2026-09-21T05:44:36.339Z"
+     },
+     "mandate_digest": "sha256:aaaa...",
+     "issued_at": "2026-09-20T05:45:00.000Z",
+     "issuer_id": "sb:platform:vector-muse"
+   }
+
+   type (REQUIRED)  The string "acta:connector-context".
+
+   platform (REQUIRED)  A stable name for the platform: lowercase
+      letters, digits, dots and hyphens, at most 200 characters, such as
+      "meta.muse" or "anthropic.claude-code".
+
+   agent (REQUIRED)  The platform's identifier or public key for the
+      acting agent, at most 200 characters.
+
+   grant (REQUIRED)  An object.  Its member type (REQUIRED) is one of
+      "one_time", "session", "task", "time_bounded", "perpetual".  Its
+      members id and purpose are OPTIONAL strings, at most 200 and 500
+      characters.  Its members issued_at and expires_at are OPTIONAL
+      [RFC3339] timestamps in UTC; when both are present, expires_at
+      MUST be later than issued_at.  The meaning of each grant type is
+      the platform's; the profile records the type, it does not define
+      the platform's permission model.
+
+   mandate_digest (OPTIONAL)  The digest of the signed standard or
+      mandate the grant sits under, in the form "sha256:" followed by 64
+      lowercase hexadecimal characters, computed as a policy digest
+      under Section 6.8 of [ACTA].
+
+   issued_at (OPTIONAL)  When the platform built the context, as an
+
+
+
+Farley                    Expires 24 March 2027                 [Page 4]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+      [RFC3339] timestamp in UTC.
+
+   issuer_id (REQUIRED when signed)  The platform's key identifier.  It
+      MUST equal the kid of the signature that covers the context, so
+      that the signer's identity sits inside the signed bytes.
+
+   No other members are permitted.  String members MUST NOT contain
+   control characters.  A context that fails any rule in this section is
+   malformed.
+
+2.2.  Signing
+
+   A platform that can sign presents the context as an envelope: an
+   object with the context as its payload member and a signature object
+   with alg, kid and sig as its signature member.  The signing input is
+   the JCS [RFC8785] canonicalization of the payload alone, and the
+   signature is Ed25519 [RFC8032] over those UTF-8 bytes, exactly as
+   Section 5.1 of [ACTA] specifies for a receipt.  A platform that
+   cannot sign presents an envelope with the payload member only.
+
+   The platform's key is distributed out of band.  A recorder or
+   verifier MUST NOT take a key from the context, from the call, or from
+   the receipt as the key to verify under; see Section 9.5 of [ACTA].
+
+2.3.  Presentation over the Model Context Protocol
+
+   Over MCP [MCP] the platform places the envelope in the request
+   metadata of a tools/call request under the key "veritasacta.com/
+   connector":
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 5]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+   {
+     "jsonrpc": "2.0",
+     "id": 7,
+     "method": "tools/call",
+     "params": {
+       "name": "prepare_repository_review",
+       "arguments": { "pull_number": 25 },
+       "_meta": {
+         "veritasacta.com/connector": {
+           "payload": {
+             "type": "acta:connector-context", "...": "..."
+           },
+           "signature": {
+             "alg": "EdDSA",
+             "kid": "sb:platform:vector-muse",
+             "sig": "..."
+           }
+         }
+       }
+     }
+   }
+
+   Other transports carry the same envelope in whatever metadata channel
+   they have.  The recorder reads the context from the call it received;
+   it never reconstructs one.
+
+3.  The connector Member on a Decision Receipt
+
+   A recorder that received a context with a call adds a connector
+   member to the payload of the decision receipt it issues for that
+   call, as defined in Section 3.1 of [ACTA].  The member is covered by
+   the receipt signature like every other payload member.
+
+3.1.  Fields
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 6]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+   "connector": {
+     "v": 1,
+     "context": { "type": "acta:connector-context", "...": "..." },
+     "context_signature": {
+       "alg": "EdDSA",
+       "kid": "sb:platform:vector-muse",
+       "sig": "..."
+     },
+     "context_check": "valid",
+     "platform_kid": "sb:platform:vector-muse",
+     "request_digest": "c7d2...",
+     "effect": {
+       "status": "confirmed",
+       "readback_digest": "9f1a...",
+       "observed_at": "2026-09-20T06:09:00.000Z"
+     }
+   }
+
+   v (REQUIRED)  The integer 1.
+
+   context (REQUIRED)  The presented context, verbatim, as defined in
+      Section 2.1.
+
+   context_signature (OPTIONAL)  The presented signature object,
+      verbatim.  Present exactly when the platform presented one.
+
+   context_check (REQUIRED)  What the recorder itself established:
+      "unsigned" when no signature was presented; "unverifiable" when a
+      signature was presented but the recorder held no key for its kid;
+      "valid" when the recorder verified the signature under a key it
+      holds for that kid; "invalid" when it held such a key and the
+      signature did not verify.
+
+   platform_kid (REQUIRED when context_check is "valid", otherwise
+   absent)  The kid of the key the recorder verified under.  It MUST
+      equal the kid of context_signature.
+
+   request_digest (REQUIRED)  The SHA-256 digest, as 64 lowercase
+      hexadecimal characters, of the JCS canonicalization of the object
+      {"tool": name, "input": arguments} built from the call as the
+      recorder received it, where input is an empty object when the call
+      carried no arguments.  See Section 5.
+
+   effect (OPTIONAL)  An object.  Its member status (REQUIRED) is one of
+
+
+
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 7]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+      "confirmed", "refused", "not_observed".  Its member
+      readback_digest is the SHA-256 digest, as 64 lowercase hexadecimal
+      characters, of the JCS canonicalization of what the service read
+      back after acting; it is REQUIRED when status is "confirmed".  Its
+      member observed_at is an OPTIONAL [RFC3339] timestamp in UTC.
+
+   No other members are permitted.
+
+3.2.  Recorder Rules
+
+   *  The recorder MUST write the context and its signature exactly as
+      presented.  It MUST NOT normalize, complete, or repair them.
+
+   *  The recorder MUST set context_check from its own verification
+      only.  A platform's statement about its own signature, or about
+      the grant, MUST NOT influence the value.
+
+   *  The recorder MUST NOT record a malformed context.  It MAY refuse
+      the call, and it SHOULD log that a context was ignored, but the
+      receipt it issues carries no connector member for a context the
+      profile would reject.
+
+   *  The recorder MUST compute request_digest from the call it
+      received, never from a digest the platform presented.
+
+   *  The recorder MUST add effect only after it has observed the
+      effect, and MUST NOT set status to "confirmed" without a readback
+      it computed the digest of.
+
+   *  A recorder that issues one receipt per decision, as a gate does,
+      attaches the member to the receipt of the decision for that call.
+      A recorder that also observes the effect MAY issue a second
+      receipt for the same call carrying the effect, chained to the
+      first under Section 6.7 of [ACTA].
+
+4.  Verification
+
+   A verifier that implements this profile first verifies the receipt
+   under Section 5.2 of [ACTA].  A receipt whose signature does not
+   verify is invalid before the profile is consulted; a tampered
+   connector member breaks the receipt signature like any other tampered
+   member.
+
+
+
+
+
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 8]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+4.1.  Schema
+
+   The verifier checks the member against Section 3.1 and Section 2.1,
+   including the consistency rules: context_check "unsigned" only
+   without a signature, any other value only with one; platform_kid
+   present exactly when context_check is "valid" and equal to the
+   signature kid; context.issuer_id equal to the signature kid whenever
+   a signature is present; readback_digest present whenever
+   effect.status is "confirmed".  A member that fails is a payload that
+   does not satisfy the schema of its declared type in the sense of
+   Section 5.3 of [ACTA], and the receipt is invalid.
+
+4.2.  The Platform Signature
+
+   When context_signature is present and the verifier holds a key for
+   its kid obtained outside the receipt, the verifier MUST verify the
+   signature over the JCS canonicalization of context under that key.
+   If it does not verify, the receipt is invalid: the recorded context
+   is not what the platform signed, whatever context_check says.  If it
+   verifies, the verifier reports so; a recorded context_check of
+   "invalid" or "unverifiable" then tells the verifier that the recorder
+   held a different key, or none, for that kid, which the verifier
+   SHOULD surface as a warning.
+
+   When context_signature is present and the verifier holds no key for
+   its kid, the platform signature is unverifiable.  This is not a
+   failure.  The verifier MUST report it as such, MUST NOT report the
+   receipt invalid on that account, and SHOULD say that the recorded
+   context_check is the recorder's word alone.
+
+   When context_signature is absent, nothing about the grant is
+   established beyond the platform's presentation, and the verifier MUST
+   say so.
+
+4.3.  Outcomes
+
+   The three outcomes of Section 5.3 of [ACTA] apply to the receipt as a
+   whole.  Within the profile, the verifier MUST distinguish, in every
+   form of output a consumer can act on: whether the member is well
+   formed; the recorded context_check; and the verifier's own result for
+   the platform signature, one of "absent", "unverifiable", "valid",
+   "invalid".  The reference verifier names the two ways a receipt fails
+   under the profile: connector_schema_invalid and
+   connector_context_signature_invalid.
+
+
+
+
+
+
+
+Farley                    Expires 24 March 2027                 [Page 9]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+4.4.  What the Member Proves
+
+   A valid receipt with a well-formed member proves that the recorder
+   received a call whose digest is request_digest, that the platform
+   presented exactly the recorded context with it, and, when effect is
+   present, what the recorder observed the service report.  With a
+   platform signature that verifies under a trusted key it also proves
+   that the platform stood behind that context at the time.  It does not
+   prove that the person understood the grant, that the grant type means
+   what the verifier assumes, that the service did what it reported, or
+   anything about calls that carried no context.
+
+5.  Digest Construction
+
+   Every digest in this profile is SHA-256 over the UTF-8 bytes of the
+   JCS [RFC8785] canonicalization of a JSON value, encoded as 64
+   lowercase hexadecimal characters. request_digest is computed over
+   {"tool": name, "input": arguments}, with the arguments object as
+   received and an empty object when there were none; member order in
+   the source does not matter because JCS sorts it. readback_digest is
+   computed over the JSON value the service read back, as the recorder
+   holds it. mandate_digest carries the "sha256:" prefix because it is a
+   policy digest under Section 6.8 of [ACTA]; the other two carry none
+   because they are content digests in the style of action_ref in
+   Section 2.2 of [ACTA].
+
+6.  Test Vectors
+
+   Seven vectors are published with the reference implementation at
+   https://github.com/scopeblind/scopeblind-gateway in the file vectors/
+   connector-action.v1.json.  Each is a complete decision receipt signed
+   by a fixed gate key, with a connector member, the platform key the
+   profile expects the verifier to be given, and the outcome required
+   with and without that key.  Keys and timestamps are fixed, so the
+   file is reproducible byte for byte from the source that builds it.
+
+   unsigned-context  A bare context; recorded as unsigned; valid either
+      way.
+
+   signed-context-valid-confirmed  A signed context the recorder
+      verified, with a confirmed effect and its readback digest; valid
+      either way; with the key the platform signature is valid.
+
+   signed-context-unverifiable-at-the-gate  A signed context the
+      recorder held no key for; valid either way; with the key the
+      verifier reports the signature valid and warns that the recorder
+      could not check it.
+
+
+
+
+Farley                    Expires 24 March 2027                [Page 10]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+   tampered-context-recorded-as-valid  The recorded context differs from
+      what the platform signed, yet context_check says valid.  Invalid
+      with the key (connector_context_signature_invalid); without the
+      key the claim is unverifiable and the receipt stays valid with
+      that warning.
+
+   grant-type-outside-the-profile  grant.type is "forever"; invalid
+      either way (connector_schema_invalid).
+
+   confirmed-effect-without-readback  effect.status is "confirmed" with
+      no readback_digest; invalid either way.
+
+   unsigned-context-recorded-as-valid  No signature, yet context_check
+      says valid and names a platform key; invalid either way.
+
+   A conformant verifier reaches every listed outcome.  A verifier that
+   reports the tampered vector valid while holding the platform key is
+   taking the recorder's word for the platform signature, which this
+   profile exists to make unnecessary.
+
+7.  Security Considerations
+
+   The security considerations of [ACTA] apply.  In addition:
+
+   *  Presented is not verified.  The member's design keeps the
+      platform's presentation, the recorder's check, and the verifier's
+      own check as three separate facts.  Implementations MUST NOT
+      collapse them, for instance by omitting context_check, or by
+      treating a recorded "valid" as proof without holding the key.
+
+   *  A platform that signs contexts attests that its agent acted under
+      a grant it recorded.  It does not attest that the person read or
+      understood the grant, and a verifier MUST NOT present the receipt
+      as the person's consent to the specific call.  What the person
+      agreed to is carried, when at all, by the mandate the
+      mandate_digest names, under whatever rules govern that mandate.
+
+   *  request_digest binds the call, not the moment.  Replay is
+      addressed by the receipt's issued_at, by the chain of Section 6.7
+      of [ACTA], and by whatever nonce or idempotency the service
+      applies; the profile adds no replay protection of its own.
+
+   *  grant.purpose is free text written by a platform or a person and
+      may contain personal data.  Platforms SHOULD keep it short and
+      specific to the action.  Verifiers do not need it to reach any
+      outcome in Section 4, and receipts intended for wide distribution
+      SHOULD carry it under the selective disclosure of Section 6 of
+      [ACTA] where that is in use.
+
+
+
+Farley                    Expires 24 March 2027                [Page 11]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+   *  Platform keys are trust anchors and MUST be distributed as such:
+      published by the platform at a stable location or given to the
+      recorder and verifier through a channel the platform controls.  A
+      recorder configured with a wrong key records "invalid" for honest
+      contexts; a verifier with the right key will then report the
+      discrepancy, which is the intended behaviour.
+
+   *  A recorder that is the service itself attests its own effect.  A
+      gate in front of the service that reads the effect back through
+      the service's interface attests what the service told it.  Neither
+      is an independent witness of the world; effect records what was
+      read back, and the receipt says by whom.
+
+8.  IANA Considerations
+
+   This document has no IANA actions.  The type string "acta:connector-
+   context" and the member name connector are used under the conventions
+   of [ACTA], which defines no registry for them at this revision.
+
+9.  References
+
+9.1.  Normative References
+
+   [ACTA]     Farley, T., "Signed Decision Receipts for Machine-to-
+              Machine Access Control", Work in Progress, Internet-Draft,
+              draft-farley-acta-signed-receipts-04, September 2026,
+              <https://datatracker.ietf.org/doc/draft-farley-acta-
+              signed-receipts/>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, May 2017,
+              <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC8032]  Josefsson, S. and I. Liusvaara, "Edwards-Curve Digital
+              Signature Algorithm (EdDSA)", RFC 8032, January 2017,
+              <https://www.rfc-editor.org/info/rfc8032>.
+
+   [RFC8785]  Rundgren, A., Jordan, B., and S. Erdtman, "JSON
+              Canonicalization Scheme (JCS)", RFC 8785, June 2020,
+              <https://www.rfc-editor.org/info/rfc8785>.
+
+   [RFC3339]  Klyne, G. and C. Newman, "Date and Time on the Internet:
+              Timestamps", RFC 3339, July 2002,
+              <https://www.rfc-editor.org/info/rfc3339>.
+
+
+
+Farley                    Expires 24 March 2027                [Page 12]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+9.2.  Informative References
+
+   [MCP]      Anthropic, PBC and contributors, "Model Context Protocol
+              Specification", 2025,
+              <https://modelcontextprotocol.io/specification/>.
+
+Appendix A.  Example Receipt
+
+   The second vector, abbreviated.  The gate recorded a signed context
+   it verified, and the confirmed effect of a repository update read
+   back from the service.
+
+   {
+     "payload": {
+       "type": "protectmcp:decision",
+       "tool_name": "prepare_repository_review",
+       "decision": "allow",
+       "reason": "default_allow",
+       "policy_digest": "sha256:bbbb...",
+       "request_id": "vector-2",
+       "mode": "enforce",
+       "spec": "draft-farley-acta-signed-receipts-04",
+       "connector": {
+         "v": 1,
+         "context": {
+           "type": "acta:connector-context",
+           "platform": "meta.muse",
+           "agent": "agent-e8d36428",
+           "grant": {
+             "type": "task",
+             "id": "grant-42",
+             "purpose": "Prepare the client review of pull request 25",
+             "issued_at": "2026-09-20T05:44:36.339Z",
+             "expires_at": "2026-09-21T05:44:36.339Z"
+           },
+           "mandate_digest": "sha256:aaaa...",
+           "issued_at": "2026-09-20T05:45:00.000Z",
+           "issuer_id": "sb:platform:vector-muse"
+         },
+         "context_signature": {
+           "alg": "EdDSA",
+           "kid": "sb:platform:vector-muse",
+           "sig": "..."
+         },
+         "context_check": "valid",
+         "platform_kid": "sb:platform:vector-muse",
+         "request_digest": "...",
+         "effect": {
+
+
+
+Farley                    Expires 24 March 2027                [Page 13]
+
+Internet-Draft        Acta Connector-Action Profile       September 2026
+
+
+           "status": "confirmed",
+           "readback_digest": "...",
+           "observed_at": "2026-09-20T06:09:00.000Z"
+         }
+       },
+       "issued_at": "2026-09-20T06:00:00.000Z",
+       "issuer_id": "sb:issuer:..."
+     },
+     "signature": {
+       "alg": "EdDSA", "kid": "sb:issuer:...", "sig": "..."
+     }
+   }
+
+Appendix B.  Acknowledgements
+
+   The three-way split of presented, checked, and verified came out of a
+   rehearsal in which a personal agent prepared shared work through a
+   connector and two people decided on their own devices.  The rehearsal
+   showed that the one thing a service never learns is the grant, and
+   that a receipt which merely repeats the platform's claim would have
+   been worse than none.
+
+Author's Address
+
+   Tom Farley
+   ScopeBlind
+   Sydney
+   Australia
+   Email: tom@scopeblind.com
+   URI:   https://veritasacta.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farley                    Expires 24 March 2027                [Page 14]
